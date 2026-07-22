@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finebank Dashboard — Executive Summary</title>
+
+  <!-- Google Fonts: Inter (body), Space Grotesk (display), Fira Code (mono/eyebrows) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- reveal.js core stylesheet (our inline <style> below IS the theme; no reveal theme file) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+
+  <style>
+    :root {
+      /* ---- Blitzy brand palette ---- */
+      --blitzy-primary: #5B39F3;
+      --blitzy-dark: #2D1C77;
+      --blitzy-teal: #94FAD5;
+      --blitzy-navy: #1A105F;
+      --blitzy-grad-start: #7A6DEC;
+      --blitzy-grad-mid: #5B39F3;
+      --blitzy-grad-end: #4101DB;
+      /* neutrals */
+      --blitzy-ink: #333333;
+      --blitzy-gray: #999999;
+      --blitzy-line: #D9D9D9;
+      --blitzy-mist: #F4EFF6;
+      --blitzy-cloud: #F5F5F5;
+      --blitzy-white: #FFFFFF;
+      /* ---- font families ---- */
+      --ff-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --ff-display: 'Space Grotesk', 'Inter', sans-serif;
+      --ff-mono: 'Fira Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+      /* ---- gradients ---- */
+      --gradient-hero: linear-gradient(68deg, #7A6DEC 15.56%, #5B39F3 62.74%, #4101DB 84.44%);
+      --gradient-accent: linear-gradient(90deg, #7A6DEC 0%, #5B39F3 50%, #4101DB 100%);
+    }
+
+    /* ---- base reveal surface ---- */
+    .reveal {
+      font-family: var(--ff-body);
+      font-size: 34px;
+      color: var(--blitzy-ink);
+    }
+    .reveal .slides {
+      text-align: left;
+    }
+    .reveal .slides section {
+      height: 100%;
+      padding: 70px 96px;
+      box-sizing: border-box;
+      background: var(--blitzy-white);
+    }
+    .reveal h1,
+    .reveal h2,
+    .reveal h3 {
+      font-family: var(--ff-display);
+      color: var(--blitzy-dark);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+      margin: 0 0 0.4em 0;
+      text-transform: none;
+    }
+    .reveal h1 { font-size: 2.15em; }
+    .reveal h2 { font-size: 1.5em; }
+    .reveal h3 { font-size: 1.05em; }
+    .reveal p { line-height: 1.4; margin: 0 0 0.6em 0; }
+    .reveal strong { color: var(--blitzy-primary); font-weight: 600; }
+    .reveal ul { display: block; margin: 0.2em 0 0 0; }
+    .reveal li { margin: 0 0 0.5em 0; line-height: 1.35; }
+    .reveal code {
+      font-family: var(--ff-mono);
+      background: var(--blitzy-mist);
+      color: var(--blitzy-dark);
+      padding: 0.08em 0.4em;
+      border-radius: 6px;
+      font-size: 0.86em;
+    }
+
+    /* ---- eyebrow (Fira Code kicker) ---- */
+    .eyebrow {
+      font-family: var(--ff-mono);
+      font-weight: 500;
+      font-size: 0.52em;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--blitzy-primary);
+      margin: 0 0 0.9em 0;
+      display: block;
+    }
+
+    /* ---- accent bar ---- */
+    .accent-bar {
+      width: 160px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--gradient-accent);
+      margin: 0.4em 0 0 0;
+    }
+
+    /* =========================================================
+       SLIDE TYPE: TITLE
+       ========================================================= */
+    .reveal section.slide-title {
+      background: var(--gradient-hero);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .reveal section.slide-title h1 { color: var(--blitzy-white); font-size: 2.6em; }
+    .reveal section.slide-title .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-title .subtitle {
+      font-size: 0.92em;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 24em;
+      font-weight: 400;
+    }
+    .reveal section.slide-title .hero-icon {
+      color: var(--blitzy-teal);
+      margin-bottom: 0.5em;
+    }
+    .reveal section.slide-title .hero-icon svg {
+      width: 84px;
+      height: 84px;
+      stroke-width: 1.5;
+    }
+    .reveal section.slide-title .accent-bar { margin-top: 1em; }
+
+    /* =========================================================
+       SLIDE TYPE: SECTION DIVIDER
+       ========================================================= */
+    .reveal section.slide-divider {
+      background: var(--blitzy-dark);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .reveal section.slide-divider h2 {
+      color: var(--blitzy-white);
+      font-size: 2.1em;
+    }
+    .reveal section.slide-divider .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-divider .divider-icon {
+      color: var(--blitzy-teal);
+      margin-bottom: 0.4em;
+    }
+    .reveal section.slide-divider .divider-icon svg {
+      width: 96px;
+      height: 96px;
+      stroke-width: 1.5;
+    }
+    .reveal section.slide-divider .accent-bar { margin: 0.6em auto 0; }
+
+    /* =========================================================
+       SLIDE TYPE: CLOSING
+       ========================================================= */
+    .reveal section.slide-closing {
+      background: var(--blitzy-navy);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .reveal section.slide-closing h2 {
+      color: var(--blitzy-white);
+      font-size: 2.3em;
+    }
+    .reveal section.slide-closing .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-closing li { color: rgba(255, 255, 255, 0.92); }
+    .reveal section.slide-closing .closing-icon { color: var(--blitzy-teal); margin-bottom: 0.4em; }
+    .reveal section.slide-closing .closing-icon svg { width: 72px; height: 72px; stroke-width: 1.5; }
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      margin-top: 1.2em;
+      font-family: var(--ff-display);
+      font-weight: 700;
+      font-size: 0.9em;
+      color: var(--blitzy-white);
+    }
+    .brand-lockup .brand-dot {
+      width: 0.7em;
+      height: 0.7em;
+      border-radius: 50%;
+      background: var(--blitzy-teal);
+      display: inline-block;
+    }
+    .reveal section.slide-closing .accent-bar { margin-top: 0.8em; }
+
+    /* =========================================================
+       COMPONENT: KPI CARDS
+       ========================================================= */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      margin-top: 0.6em;
+    }
+    .kpi-card {
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 16px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kpi-icon {
+      color: var(--blitzy-primary);
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: var(--blitzy-mist);
+    }
+    .kpi-icon svg { width: 26px; height: 26px; stroke-width: 2; }
+    .kpi-value {
+      font-family: var(--ff-mono);
+      font-weight: 500;
+      font-size: 1.9em;
+      color: var(--blitzy-dark);
+      line-height: 1;
+    }
+    .kpi-label {
+      font-size: 0.5em;
+      letter-spacing: 0.04em;
+      color: var(--blitzy-gray);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* =========================================================
+       COMPONENT: ICON ROW
+       ========================================================= */
+    .icon-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 0.7em;
+    }
+    .icon-row .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 999px;
+      padding: 14px 24px;
+      font-family: var(--ff-mono);
+      font-size: 0.62em;
+      color: var(--blitzy-dark);
+    }
+    .icon-row .chip svg {
+      width: 26px;
+      height: 26px;
+      color: var(--blitzy-primary);
+      stroke-width: 2;
+    }
+
+    /* value bullets with inline icons */
+    .value-list { list-style: none; margin: 0.4em 0 0 0; padding: 0; }
+    .value-list li {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 0.86em;
+    }
+    .value-list li svg {
+      width: 34px;
+      height: 34px;
+      color: var(--blitzy-primary);
+      flex: 0 0 auto;
+      stroke-width: 2;
+    }
+
+    /* =========================================================
+       COMPONENT: STYLED TABLE
+       ========================================================= */
+    .reveal table.styled {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5em;
+      font-size: 0.62em;
+    }
+    .reveal table.styled thead th {
+      text-align: left;
+      font-family: var(--ff-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.82em;
+      color: var(--blitzy-white);
+      background: var(--blitzy-primary);
+      padding: 16px 20px;
+      border: none;
+    }
+    .reveal table.styled thead th:first-child { border-radius: 10px 0 0 0; }
+    .reveal table.styled thead th:last-child { border-radius: 0 10px 0 0; }
+    .reveal table.styled tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--blitzy-line);
+      color: var(--blitzy-ink);
+      vertical-align: middle;
+    }
+    .reveal table.styled tbody tr:nth-child(even) { background: var(--blitzy-mist); }
+    .reveal table.styled td .route,
+    .reveal table.styled td .ver {
+      font-family: var(--ff-mono);
+      color: var(--blitzy-primary);
+    }
+
+    /* =========================================================
+       COMPONENT: MERMAID CONTAINER
+       ========================================================= */
+    .mermaid-wrap {
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 0.4em;
+      display: flex;
+      justify-content: center;
+    }
+    .reveal pre.mermaid {
+      background: transparent;
+      box-shadow: none;
+      width: 100%;
+      margin: 0;
+      font-size: 15px;
+      text-align: center;
+      line-height: normal;
+    }
+    .reveal pre.mermaid svg { max-width: 100%; height: auto; }
+
+    /* progress/controls tint */
+    .reveal .progress { color: var(--blitzy-primary); }
+    .reveal .controls { color: var(--blitzy-primary); }
+  </style>
+</head>
+
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ===== 1. TITLE ===== -->
+      <section class="slide-title">
+        <span class="hero-icon"><i data-lucide="landmark"></i></span>
+        <span class="eyebrow">Executive Summary</span>
+        <h1>Finebank Dashboard</h1>
+        <p class="subtitle">
+          An institutional portfolio-oversight interface — built screen for screen from the
+          Figma design, ready for leadership review.
+        </p>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 2. CONTENT: findings / KPI summary ===== -->
+      <section>
+        <span class="eyebrow">At a glance</span>
+        <h2>What we delivered</h2>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="layout-dashboard"></i></span>
+            <span class="kpi-value">6</span>
+            <span class="kpi-label">Dashboard screens</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="component"></i></span>
+            <span class="kpi-value">6</span>
+            <span class="kpi-label">Reusable components</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="panels-top-left"></i></span>
+            <span class="kpi-value">1</span>
+            <span class="kpi-label">Shared shell</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="server-off"></i></span>
+            <span class="kpi-value">0</span>
+            <span class="kpi-label">Backend services</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 3. CONTENT: architecture Mermaid ===== -->
+      <section>
+        <span class="eyebrow">Architecture</span>
+        <h2>One shell, six screens</h2>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart TD
+    Layout["app/layout.tsx — Shared Shell"]
+    Sidebar["Sidebar"]
+    TopBar["TopBar"]
+    Routes["Active Route (children)"]
+    Layout --> Sidebar
+    Layout --> TopBar
+    Layout --> Routes
+    Routes --> Overview["/overview"]
+    Routes --> Holdings["/holdings"]
+    Routes --> More["/cash-collateral · /corporate-actions<br/>/compliance · /reporting"]
+    Overview --> Kpi["KpiCard"]
+    Overview --> Nav["NavChart · Recharts"]
+    Overview --> Alerts["AlertsPanel"]
+    Holdings --> Table["HoldingsTable"]
+    Kpi --> Lib["lib/ — types · mock-data · format · nav"]
+    Table --> Lib
+    Nav --> Lib
+    Alerts --> Lib
+          </pre>
+        </div>
+      </section>
+
+      <!-- ===== 4. DIVIDER: What We Built ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="layout-dashboard"></i></span>
+        <span class="eyebrow">Section 01</span>
+        <h2>What We Built</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 5. CONTENT: six screens table ===== -->
+      <section>
+        <span class="eyebrow">Screens</span>
+        <h2>Six account sections</h2>
+        <table class="styled">
+          <thead>
+            <tr><th>Section</th><th>Route</th><th>Focus</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Overview</td><td><span class="route">/overview</span></td><td>KPIs, NAV chart, alerts</td></tr>
+            <tr><td>Holdings</td><td><span class="route">/holdings</span></td><td>Data-dense positions table</td></tr>
+            <tr><td>Cash &amp; Collateral</td><td><span class="route">/cash-collateral</span></td><td>Liquidity &amp; collateral</td></tr>
+            <tr><td>Corporate Actions</td><td><span class="route">/corporate-actions</span></td><td>Events &amp; elections</td></tr>
+            <tr><td>Compliance</td><td><span class="route">/compliance</span></td><td>Alerts &amp; compliance panel</td></tr>
+            <tr><td>Reporting</td><td><span class="route">/reporting</span></td><td>Statements &amp; exports</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 6. CONTENT: one route per screen ===== -->
+      <section>
+        <span class="eyebrow">Routing</span>
+        <h2>A distinct route per view</h2>
+        <p>Every Figma frame is its own App Router page — never tabs on one screen. The sidebar highlights the active section.</p>
+        <div class="icon-row">
+          <span class="chip"><i data-lucide="gauge"></i>/overview</span>
+          <span class="chip"><i data-lucide="wallet"></i>/holdings</span>
+          <span class="chip"><i data-lucide="banknote"></i>/cash-collateral</span>
+          <span class="chip"><i data-lucide="calendar-clock"></i>/corporate-actions</span>
+          <span class="chip"><i data-lucide="shield-check"></i>/compliance</span>
+          <span class="chip"><i data-lucide="file-text"></i>/reporting</span>
+        </div>
+      </section>
+
+      <!-- ===== 7. DIVIDER: Why It Matters ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="trending-up"></i></span>
+        <span class="eyebrow">Section 02</span>
+        <h2>Why It Matters</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 8. CONTENT: business value ===== -->
+      <section>
+        <span class="eyebrow">Business value</span>
+        <h2>Trust you can see</h2>
+        <ul class="value-list">
+          <li><i data-lucide="building-2"></i>Muted, institutional design signals credibility.</li>
+          <li><i data-lucide="align-right"></i>Monospace figures keep every column aligned.</li>
+          <li><i data-lucide="rocket"></i>Static mock data ships the UI fast, de-risked.</li>
+          <li><i data-lucide="cloud"></i>Vercel deploys on every push, zero ops.</li>
+        </ul>
+      </section>
+
+      <!-- ===== 9. CONTENT: design system ===== -->
+      <section>
+        <span class="eyebrow">Design system</span>
+        <h2>Tokens, not guesswork</h2>
+        <table class="styled">
+          <thead>
+            <tr><th>Layer</th><th>Approach</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Palette</td><td>Muted institutional roles as Tailwind tokens</td></tr>
+            <tr><td>Typography</td><td>Display + monospace faces via <span class="ver">next/font</span></td></tr>
+            <tr><td>Numerics</td><td>Aligned via <span class="ver">font-mono tabular-nums</span></td></tr>
+            <tr><td>Styling</td><td>Tailwind utilities only — no CSS-in-JS</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 10. DIVIDER: How It's Engineered ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="cpu"></i></span>
+        <span class="eyebrow">Section 03</span>
+        <h2>How It's Engineered</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 11. CONTENT: tech stack table ===== -->
+      <section>
+        <span class="eyebrow">Stack</span>
+        <h2>Pinned and predictable</h2>
+        <table class="styled">
+          <thead>
+            <tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Framework</td><td>Next.js — App Router</td><td><span class="ver">14.2.35</span></td></tr>
+            <tr><td>UI runtime</td><td>React</td><td><span class="ver">18.3.1</span></td></tr>
+            <tr><td>Language</td><td>TypeScript — strict</td><td><span class="ver">5.9.3</span></td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS</td><td><span class="ver">3.4.19</span></td></tr>
+            <tr><td>Charts</td><td>Recharts</td><td><span class="ver">2.15.4</span></td></tr>
+            <tr><td>Runtime</td><td>Node.js LTS</td><td><span class="ver">20.x</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 12. CONTENT: data flow Mermaid ===== -->
+      <section>
+        <span class="eyebrow">Data flow</span>
+        <h2>Static data, in-memory props</h2>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart LR
+    Types["lib/types.ts<br/>view models"]
+    Mock["lib/mock-data.ts<br/>static constants"]
+    Pages["Route Pages<br/>app/**/page.tsx"]
+    Comps["Presentational<br/>Components"]
+    UI["Rendered UI"]
+    Types --> Mock
+    Mock -->|in-memory props| Pages
+    Pages -->|typed props| Comps
+    Comps --> UI
+    NoNet["No fetch · No API · No database"]
+    NoNet -.enforced.-> Mock
+          </pre>
+        </div>
+      </section>
+
+      <!-- ===== 13. DIVIDER: Risks & Mitigations ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="shield-check"></i></span>
+        <span class="eyebrow">Section 04</span>
+        <h2>Risks &amp; Mitigations</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 14. CONTENT: risks table ===== -->
+      <section>
+        <span class="eyebrow">Risk posture</span>
+        <h2>Known risks, clear controls</h2>
+        <table class="styled">
+          <thead>
+            <tr><th>Risk</th><th>Mitigation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Design fidelity drift</td><td>Per-screen screenshot vs Figma frame</td></tr>
+            <tr><td>Runtime drift</td><td>Node pinned <span class="ver">20.x</span> + committed lockfile</td></tr>
+            <tr><td>Scope creep</td><td>Six named screens, bounded</td></tr>
+            <tr><td>Static-only data</td><td>Explicit UI-only phase boundary</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 15. CONTENT: onboarding / next steps ===== -->
+      <section>
+        <span class="eyebrow">Getting started</span>
+        <h2>Up and running in minutes</h2>
+        <ul class="value-list">
+          <li><i data-lucide="download"></i>Install dependencies with <code>npm install</code>.</li>
+          <li><i data-lucide="play"></i>Run <code>npm run dev</code> at <code>localhost:3000</code>.</li>
+          <li><i data-lucide="package"></i>Ship with <code>npm run build</code> on Vercel.</li>
+          <li><i data-lucide="git-branch"></i>Next phase: live data and authentication.</li>
+        </ul>
+      </section>
+
+      <!-- ===== 16. CLOSING ===== -->
+      <section class="slide-closing">
+        <span class="closing-icon"><i data-lucide="check-circle-2"></i></span>
+        <span class="eyebrow">In summary</span>
+        <h2>Institutional UI, delivered</h2>
+        <ul>
+          <li>Review the six screens against Figma.</li>
+          <li>Approve for the live-data phase.</li>
+          <li>Preview deploys ship on every push.</li>
+        </ul>
+        <div class="brand-lockup"><span class="brand-dot"></span>Blitzy</div>
+        <div class="accent-bar"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- reveal.js core (UMD, exposes window.Reveal) -->
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <!-- Lucide icons (UMD, exposes window.lucide) -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+  <!-- Mermaid is ESM-only; import it as a module, expose on window, then wire reveal + render -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#F2F0FE',
+        primaryTextColor: '#333333',
+        primaryBorderColor: '#5B39F3',
+        lineColor: '#999999',
+        secondaryColor: '#F4EFF6',
+        fontFamily: "'Inter', sans-serif"
+      }
+    });
+
+    function renderDynamicVisuals() {
+      // Render any not-yet-processed Mermaid diagrams (v11 marks done nodes with data-processed).
+      try {
+        window.mermaid.run();
+      } catch (err) {
+        console.error('Mermaid render error:', err);
+      }
+      // (Re)hydrate Lucide SVG icons for the current DOM.
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    Reveal.initialize({
+      hash: true,
+      transition: 'slide',
+      controlsTutorial: false,
+      width: 1920,
+      height: 1080
+    });
+
+    Reveal.on('ready', renderDynamicVisuals);
+    Reveal.on('slidechanged', renderDynamicVisuals);
+  </script>
+</body>
+</html>
