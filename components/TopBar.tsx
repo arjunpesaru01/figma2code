@@ -31,12 +31,12 @@
 // RENDERING MODEL
 // ---------------------------------------------------------------------------
 // This is a React SERVER COMPONENT. There is intentionally NO "use client"
-// directive: nothing here is interactive this phase (no hooks, no event
-// handlers, no state). The optional search field is rendered as static,
-// non-functional markup — a deliberate, spec-sanctioned choice for a UI-only
-// mock. Should a working search or menu be needed later, that interactive piece
+// directive: nothing here is interactive (no hooks, no event handlers, no
+// state). The bar renders only static account context and status affordances.
+// Should a working search or menu ever be specified, that interactive piece
 // belongs in its own small `"use client"` component, keeping this shell chrome
-// server-rendered and cheap.
+// server-rendered and cheap — a non-functional focusable control is never
+// rendered here, as it would be a broken affordance / keyboard focus trap.
 //
 // STATIC-DATA-ONLY CONTRACT
 // ---------------------------------------------------------------------------
@@ -99,9 +99,9 @@ function deriveInitials(name: string): string {
  *   - LEFT — account context: an "Account" eyebrow, the account/mandate name
  *     (the primary context), and a muted meta line carrying the as-of date and
  *     the reporting currency.
- *   - RIGHT — restrained status chrome: a decorative (non-functional) search
- *     field, the headline AUM figure (monospace, tabular figures), a muted risk
- *     badge, and an identity avatar with the account initials.
+ *   - RIGHT — restrained status chrome: the headline AUM figure (monospace,
+ *     tabular figures), a muted risk badge, and an identity avatar with the
+ *     account initials.
  *
  * All numeric figures (the AUM) render in `font-mono tabular-nums` via the
  * shared `@/lib/format` helpers so they align to the same monospace grid used
@@ -151,38 +151,14 @@ export default function TopBar({ account = defaultAccount }: TopBarProps) {
       {/* RIGHT CLUSTER — restrained institutional status chrome. `shrink-0`
           keeps these fixed-size affordances from being squeezed by the name. */}
       <div className="flex shrink-0 items-center gap-4">
-        {/* Decorative, non-functional search field (static markup for a UI-only
-            mock). Focusable but read-only so it never presents a broken handler.
-            Hidden below `lg` to keep narrow layouts uncluttered. */}
-        <div className="relative hidden lg:block">
-          <label htmlFor="topbar-search" className="sr-only">
-            Search accounts and holdings
-          </label>
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-text-subtle"
-          >
-            <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
-            <line
-              x1="13.5"
-              y1="13.5"
-              x2="17.5"
-              y2="17.5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
-          <input
-            id="topbar-search"
-            type="search"
-            readOnly
-            placeholder="Search…"
-            className="w-64 rounded-md border border-border bg-background py-1.5 pl-9 pr-3 text-sm text-text placeholder:text-text-subtle"
-          />
-        </div>
+        {/* NOTE: a decorative read-only search field previously lived here. It
+            was removed because a focusable-but-inert control is a broken
+            affordance / keyboard focus trap (it announced "search" but had no
+            behavior). Functional search is out of scope this phase — the AAP
+            defines the top bar as account-context chrome only (§0.5.2), lists no
+            search component (§0.7.1), and forbids client state (§0.3.2). If a
+            working search is ever specified, it belongs in its own small
+            `"use client"` child so this shell chrome stays server-rendered. */}
 
         {/* Headline AUM — persistent portfolio context across every screen.
             Monospace + tabular figures satisfy the numeric-alignment mandate. */}

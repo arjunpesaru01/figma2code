@@ -33,18 +33,27 @@ import type { Config } from "tailwindcss";
  *   model). Tokens are added under `theme.extend` so Tailwind's default
  *   scales remain available; we augment them, we do not replace them.
  *
- * TOKEN PROVENANCE:
+ * TOKEN PROVENANCE (RECONCILED — authoritative institutional design system):
  *   These semantic tokens ARE the project's institutional design system —
- *   they are the committed, authoritative values, not placeholders. Each
- *   role is derived to satisfy the muted-institutional mandate above: a
- *   light, cool slate/navy neutral ramp for `background`/`surface`/`border`/
- *   `text`; a single restrained navy-indigo `accent`; and a desaturated
- *   `positive`/`negative` pair for directional (gain/loss) figures. The
- *   Figma "Finebank" template remains the per-screen reference: as each
- *   frame is implemented, its exact values are reconciled here ONCE against
- *   this same token API (AAP §0.5.4). Because the roles are semantic, any
- *   such reconciliation propagates to every consuming component with no
- *   component-level edits.
+ *   they are the committed, authoritative values, not placeholders (AAP
+ *   §0.5.3). Each role is derived to satisfy the muted-institutional mandate
+ *   above: a light, cool slate/navy neutral ramp for `background`/`surface`/
+ *   `border`/`text`; a single restrained navy-indigo `accent`; and a
+ *   desaturated `positive`/`negative` pair for directional (gain/loss)
+ *   figures.
+ *
+ *   The Figma "Finebank" frames are the per-screen visual reference, but their
+ *   contents are NOT programmatically extractable in this environment
+ *   (no authenticated Figma API access — AAP §0.10.2). This token set is
+ *   therefore the reconciled, finalized single source of truth for the
+ *   institutional palette/type/spacing across all implemented screens; it is
+ *   not re-derived per component and no component defines colors independently
+ *   (AAP §0.5.3, §0.7.5). Where an objective quality bar applies, every
+ *   text/graphical foreground role has been verified to clear WCAG 2.1 AA
+ *   contrast on the surfaces it renders against (see the per-role notes in
+ *   `colors` below). Because the roles are semantic, tuning any value here
+ *   propagates uniformly to every consuming component with no per-component
+ *   edits.
  */
 const config: Config = {
   /**
@@ -94,10 +103,19 @@ const config: Config = {
         },
 
         // Text roles. `text-text` is primary; `text-text-muted` secondary.
+        // Every text role is tuned to clear WCAG 2.1 AA (>=4.5:1 for normal
+        // text) on the surfaces it is used against — `surface` (#ffffff),
+        // `background` (#f2f4f8), and `surface-strong` (#eef1f6):
+        //   DEFAULT 15.6:1, muted 5.8:1, subtle 5.2:1 (white) — all pass.
         text: {
           DEFAULT: "#1c2634", // primary — deep slate / navy
-          muted: "#5b6676", // secondary — labels, captions
-          subtle: "#8792a3", // tertiary — placeholders, disabled
+          muted: "#5b6676", // secondary — labels, captions (5.82:1 on white)
+          // tertiary — eyebrows, meta, muted graphical icons. Darkened from the
+          // previous #8792a3 (3.15:1 white / 2.86:1 bg — WCAG AA FAIL) to a
+          // still-muted slate that clears 4.5:1 on white (5.17:1), the app
+          // background (4.70:1), and surface-strong (4.57:1) while remaining a
+          // clear tertiary step below `muted` (UI-01).
+          subtle: "#646e7b",
           inverted: "#f8fafc", // text on dark / accent surfaces
         },
 
@@ -123,9 +141,15 @@ const config: Config = {
           foreground: "#ffffff", // text/icon on an accent fill
         },
 
-        // Muted status hues for the alerts / compliance surface.
+        // Muted status hues for the alerts / compliance surface. The `DEFAULT`
+        // is used as foreground on its own `subtle` tint in the AlertsPanel
+        // severity badge, so it must clear WCAG AA against that pairing.
         warning: {
-          DEFAULT: "#9a6a1b", // muted amber
+          // Darkened from the previous #9a6a1b (4.13:1 on `warning-subtle` —
+          // WCAG AA FAIL for the 11px badge text) to a deeper muted amber that
+          // clears 4.5:1 on `warning-subtle` (4.97:1) as well as on white
+          // (5.68:1) and the app background (5.16:1) (UI-01).
+          DEFAULT: "#8a5e17", // muted amber
           subtle: "#f6efe2",
         },
         info: {

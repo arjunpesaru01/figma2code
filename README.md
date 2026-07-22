@@ -92,41 +92,53 @@ place today versus what is still planned.
 - The typed data layer in `lib/`: `types.ts`, `mock-data.ts`, `format.ts`, and
   `nav.ts`.
 - The landing route `app/page.tsx`, which redirects `/` to `/overview`.
+- The shared application shell `app/layout.tsx` (rendering the Sidebar and
+  TopBar around every route, with a skip-navigation link and responsive
+  padding), plus the App Router brand icon `app/icon.svg`.
+- The first-party presentational components under `components/`: `Sidebar`,
+  `TopBar`, `KpiCard`, `HoldingsTable`, `NavChart` (Recharts), `AlertsPanel`,
+  and the data-dense section tables `CashBalancesTable`, `CollateralTable`,
+  `CorporateActionsTable`, and `ReportsTable`.
+- Five of the six screen routes under `app/`, each matching its Figma frame:
+  `/holdings`, `/cash-collateral`, `/corporate-actions`, `/compliance`, and
+  `/reporting`.
 - The standalone executive-summary deck under `blitzy-deck/`.
 
 **Planned**
-- The shared application shell `app/layout.tsx` (rendering the Sidebar and
-  TopBar around every route).
-- The six presentational components under `components/`: `Sidebar`, `TopBar`,
-  `KpiCard`, `HoldingsTable`, `NavChart` (Recharts), and `AlertsPanel`.
-- The six screen routes under `app/`: `/overview`, `/holdings`,
-  `/cash-collateral`, `/corporate-actions`, `/compliance`, and `/reporting`.
+- The `/overview` screen route (`app/overview/page.tsx`) — the composite
+  landing screen (KPI cards, the NAV chart, and a compact alerts panel) that
+  `/` already redirects to. It is the remaining screen for the final
+  six-screen milestone.
 
 ## Screens
 
-The target architecture is **one route per Figma frame**: each screen is its
-own App Router route, and all screens share a single layout (`app/layout.tsx`)
-with a persistent Sidebar and TopBar. The landing route `/` already redirects
-to `/overview`; the per-screen routes and the shared shell are planned (see
-[Implementation Status](#implementation-status)). The six sections map to these
-routes:
+The architecture is **one route per Figma frame**: each screen is its own App
+Router route, and all screens share a single layout (`app/layout.tsx`) with a
+persistent Sidebar and TopBar. The shared shell and five of the six routes are
+implemented; the landing route `/` redirects to `/overview`, which is the one
+remaining screen (see [Implementation Status](#implementation-status)). The six
+sections map to these routes:
 
-| Section           | Route                 |
-|-------------------|-----------------------|
-| Overview          | `/overview`           |
-| Holdings          | `/holdings`           |
-| Cash & Collateral | `/cash-collateral`    |
-| Corporate Actions | `/corporate-actions`  |
-| Compliance        | `/compliance`         |
-| Reporting         | `/reporting`          |
+| Section           | Route                 | Status      |
+|-------------------|-----------------------|-------------|
+| Overview          | `/overview`           | Planned     |
+| Holdings          | `/holdings`           | Implemented |
+| Cash & Collateral | `/cash-collateral`    | Implemented |
+| Corporate Actions | `/corporate-actions`  | Implemented |
+| Compliance        | `/compliance`         | Implemented |
+| Reporting         | `/reporting`          | Implemented |
 
 ## Project Structure
 
-- `app/` — the App Router directory. In place today: `page.tsx` (the `/` →
-  `/overview` redirect) and `globals.css`. Planned: the root `layout.tsx`
-  (shared shell) and one `page.tsx` per screen.
-- `components/` — _(planned)_ first-party presentational components: `Sidebar`,
-  `TopBar`, `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`.
+- `app/` — the App Router directory. In place today: the shared shell
+  `layout.tsx`, the brand `icon.svg`, `globals.css`, the `/` → `/overview`
+  redirect (`page.tsx`), and one `page.tsx` per implemented screen
+  (`holdings/`, `cash-collateral/`, `corporate-actions/`, `compliance/`,
+  `reporting/`). Planned: `overview/page.tsx`.
+- `components/` — first-party presentational components: `Sidebar`, `TopBar`,
+  `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`, and the data-dense
+  section tables `CashBalancesTable`, `CollateralTable`,
+  `CorporateActionsTable`, and `ReportsTable`.
 - `lib/` — `types.ts` (view models), `mock-data.ts` (static data), `format.ts`
   (monospace currency/percent formatters), and `nav.ts` (six-section route
   config).

@@ -48,8 +48,17 @@
 // footer counts) use `font-mono tabular-nums` to honor the monospace-numeric
 // convention (README L26, Technical Specification §7.7.2).
 
-import type { Alert, AlertSeverity } from "@/lib/types";
-import { formatDate } from "@/lib/format";
+import type { ReactNode } from "react";
+
+import type { Alert, AlertSeverity, AlertMessagePart } from "@/lib/types";
+import {
+  formatCompactCurrency,
+  formatCurrency,
+  formatDate,
+  formatPercent,
+  formatQuantity,
+  formatQuarter,
+} from "@/lib/format";
 
 /**
  * Props for {@link AlertsPanel}.
@@ -65,10 +74,18 @@ export interface AlertsPanelProps {
   title?: string;
   /**
    * Optional cap on the number of rows rendered (e.g. Overview shows 3-4).
-   * When omitted, every alert is shown. When the list is capped, a muted
+   * When omitted (`undefined`), every alert is shown. `0` shows none; the value
+   * is clamped to a nonnegative integer. When the list is capped, a muted
    * footer indicates how many of the total are visible.
    */
   maxItems?: number;
+  /**
+   * Optional explicit id for the panel heading, referenced by the section's
+   * `aria-labelledby`. Provide a distinct value when more than one panel is
+   * rendered on a page (or when a title's slug could collide with another
+   * element's id) to guarantee unique ids. Falls back to a title-derived slug.
+   */
+  id?: string;
 }
 
 /**
@@ -119,6 +136,72 @@ function headingIdFor(title: string): string {
 }
 
 /**
+ * Render an alert body (MJ-12).
+ *
+ * When the alert supplies structured `messageParts`, each fragment is rendered
+ * inline: numeric / date / period parts go through the shared `lib/format`
+ * helpers and render in `font-mono tabular-nums`, while plain `text` parts stay
+ * as body sans prose (spacing is carried inside the text parts). This keeps
+ * embedded figures — percentages, currency amounts, ISO dates, quarters — from
+ * bypassing the shared formatters and the monospace-numeric contract. When no
+ * parts are present, the plain `message` string is the fallback.
+ *
+ * @param alert - The alert whose body to render.
+ * @returns The rendered message (a fragment list, or the fallback string).
+ */
+function renderAlertMessage(alert: Alert): ReactNode {
+  const parts = alert.messageParts;
+  if (!parts || parts.length === 0) {
+    return alert.message;
+  }
+  return parts.map((part: AlertMessagePart, index: number) => {
+    const key = `${alert.id}-part-${index}`;
+    switch (part.kind) {
+      case "text":
+        return <span key={key}>{part.text}</span>;
+      case "currency":
+        return (
+          <span key={key} className="font-mono tabular-nums">
+            {part.compact
+              ? formatCompactCurrency(part.value)
+              : formatCurrency(part.value)}
+          </span>
+        );
+      case "percent":
+        return (
+          <span key={key} className="font-mono tabular-nums">
+            {formatPercent(part.value, part.decimals)}
+          </span>
+        );
+      case "quantity":
+        return (
+          <span key={key} className="font-mono tabular-nums">
+            {formatQuantity(part.value, part.decimals)}
+          </span>
+        );
+      case "date":
+        return (
+          <time key={key} dateTime={part.iso} className="font-mono tabular-nums">
+            {formatDate(part.iso, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </time>
+        );
+      case "period":
+        return (
+          <span key={key} className="font-mono tabular-nums">
+            {formatQuarter(part.quarter, part.year)}
+          </span>
+        );
+      default:
+        return null;
+    }
+  });
+}
+
+/**
  * Alerts & Compliance notifications panel.
  *
  * Renders a data-dense, divider-separated list of {@link Alert} items inside a
@@ -139,12 +222,22 @@ export default function AlertsPanel({
   alerts,
   title = "Alerts & Compliance",
   maxItems,
+  id,
 }: AlertsPanelProps) {
-  // Cap the visible rows when `maxItems` is provided; otherwise show them all.
-  const rows = maxItems ? alerts.slice(0, maxItems) : alerts;
+  // MN-01: distinguish `undefined` (no cap → show all) from a numeric cap, and
+  // clamp the cap to a nonnegative integer so `maxItems={0}` shows ZERO rows
+  // (fixing the old falsy bug that showed all) and a negative value never
+  // triggers `slice`'s count-from-the-end behavior. `slice` returns a new
+  // array, so `alerts` is never mutated.
+  const cap =
+    maxItems === undefined ? alerts.length : Math.max(0, Math.floor(maxItems));
+  const rows = alerts.slice(0, cap);
   const isEmpty = alerts.length === 0;
   const isTruncated = rows.length < alerts.length;
-  const headingId = headingIdFor(title);
+  // MN-02: prefer an explicit caller-supplied id so multiple panels on a page
+  // (or a title whose slug collides with another element) never produce
+  // duplicate ids / `aria-labelledby` targets; fall back to the title slug.
+  const headingId = id ?? headingIdFor(title);
 
   return (
     <section
@@ -171,7 +264,10 @@ export default function AlertsPanel({
         <p className="py-6 text-center font-sans text-sm text-text-muted">
           No active alerts
         </p>
-      ) : (
+      ) : rows.length > 0 ? (
+        // Render the list ONLY when there is at least one row (MN-01): a caller
+        // that passes `maxItems={0}` shows no list (just the header + the
+        // "showing 0 of N" footer), never an empty <ul>.
         // role="list" is retained deliberately: Tailwind Preflight sets
         // `list-style: none`, which strips the implicit list role in Safari +
         // VoiceOver. `divide-y` draws institutional hairline row separators.
@@ -199,7 +295,7 @@ export default function AlertsPanel({
                   </span>
                 </div>
                 <p className="mt-0.5 font-sans text-sm leading-snug text-text-muted">
-                  {alert.message}
+                  {renderAlertMessage(alert)}
                 </p>
                 <p className="mt-1 font-sans text-xs text-text-muted">
                   <span>{alert.category}</span>
@@ -216,7 +312,7 @@ export default function AlertsPanel({
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
 
       {isTruncated && (
         <footer className="mt-3 border-t border-border pt-3 font-sans text-xs text-text-muted">

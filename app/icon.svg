@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Finebank">
+  <!--
+    App Router favicon. Placing `icon.svg` in `app/` makes Next.js serve it and
+    emit the <link rel="icon"> automatically, so the previous favicon 404 is
+    resolved (MN-06). The mark mirrors the Sidebar BRAND_MARK — a rounded square
+    enclosing three ascending bars (a growth / analytics motif) — but is FILLED
+    rather than stroked so it stays legible at 16px. Colors are the committed
+    institutional accent (#3a4d8f) and its foreground (#ffffff) from
+    tailwind.config.ts; kept as literals here because a static .svg asset cannot
+    reference Tailwind tokens.
+  -->
+  <rect x="2" y="2" width="28" height="28" rx="7" fill="#3a4d8f" />
+  <path
+    d="M11 22V18M16 22V14M21 22V10"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

@@ -45,8 +45,21 @@
  *     heading, a restrained muted summary line, and tight vertical rhythm.
  */
 
+import type { Metadata } from "next";
+
 import HoldingsTable from "@/components/HoldingsTable";
 import { holdings } from "@/lib/mock-data";
+
+/**
+ * Per-route metadata (MN-07 — Holdings previously inherited the generic root
+ * title). Exports the short section label; the root layout's title template
+ * composes it into the branded document title "Holdings · Finebank".
+ */
+export const metadata: Metadata = {
+  title: "Holdings",
+  description:
+    "Data-dense holdings table with weight, market value, and day change for the institutional portfolio.",
+};
 
 /**
  * Holdings screen — `/holdings`.

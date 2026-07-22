@@ -73,8 +73,21 @@
 // screen map, and the executive deck's architecture diagram. Do not rename the
 // folder or change the slug.
 
+import type { Metadata } from "next";
+
 import AlertsPanel from "@/components/AlertsPanel";
 import { alerts } from "@/lib/mock-data";
+
+/**
+ * Per-route metadata (MN-07 — Compliance previously inherited the generic root
+ * title). Exports the short section label; the root layout's title template
+ * composes it into the branded document title "Compliance · Finebank".
+ */
+export const metadata: Metadata = {
+  title: "Compliance",
+  description:
+    "Active alerts and compliance notifications across all account sections of the portfolio.",
+};
 
 /**
  * Compliance route page (`/compliance`).

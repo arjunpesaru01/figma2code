@@ -112,9 +112,20 @@ const fontMono = IBM_Plex_Mono({
  * + meta description) for every route unless a nested route overrides it. The
  * copy is deliberately institutional and professional, matching the muted,
  * trustworthy product tone (README L22-L25).
+ *
+ * TITLE TEMPLATE (why an object, not a bare string):
+ *   The `title` is a template object so each route can export its own short
+ *   `title` (e.g. "Holdings") and have it composed into the branded document
+ *   title "Holdings · Finebank" automatically, while the root/landing default
+ *   remains the full institutional title. This gives every screen a distinct,
+ *   descriptive `<title>` (fixing the "generic root title on every route"
+ *   metadata finding) without each page restating the "· Finebank" suffix.
  */
 export const metadata: Metadata = {
-  title: "Finebank — Portfolio Oversight",
+  title: {
+    default: "Finebank — Portfolio Oversight",
+    template: "%s · Finebank",
+  },
   description:
     "Institutional finance & banking administration dashboard for portfolio oversight.",
 };
@@ -151,10 +162,14 @@ export const metadata: Metadata = {
  *   their own container instead of forcing the whole column to overflow.
  *
  * LANDMARKS / ACCESSIBILITY:
- *   `lang="en"` is set on `<html>`. This layout renders exactly ONE `<main>`
- *   landmark around `{children}`; the `<nav>` landmark is provided by `Sidebar`
- *   and the banner/`<header>` landmark by `TopBar` — they are not duplicated
- *   here. The keyboard `:focus-visible` ring is defined globally in
+ *   `lang="en"` is set on `<html>`. A skip-navigation link is the first
+ *   focusable element in `<body>`; it lets keyboard/AT users bypass the
+ *   persistent Sidebar + TopBar and jump to the route content at
+ *   `#main-content`. This layout renders exactly ONE `<main>` landmark around
+ *   `{children}` (carrying `id="main-content"` and `tabIndex={-1}` so it is a
+ *   valid skip-link focus target); the `<nav>` landmark is provided by
+ *   `Sidebar` and the banner/`<header>` landmark by `TopBar` — they are not
+ *   duplicated here. The keyboard `:focus-visible` ring is defined globally in
  *   `app/globals.css`, so focus styling is consistent app-wide.
  *
  * @param props.children - The active route segment injected by the App Router.
@@ -175,6 +190,24 @@ export default function RootLayout({
         fills short pages so the chrome never floats on bare white.
       */}
       <body className="min-h-screen bg-background text-text font-sans antialiased">
+        {/*
+          SKIP-NAVIGATION LINK — the first focusable element in the document.
+          Keyboard and screen-reader users can jump straight past the persistent
+          Sidebar + TopBar chrome to the route content. It is visually hidden
+          (`sr-only`) until it receives focus, at which point `focus:not-sr-only`
+          reveals it as a token-styled pill anchored to the top-left, above all
+          other content (`z-50`). It targets `#main-content` on the single
+          `<main>` landmark below (which carries `tabIndex={-1}` so it is a valid
+          programmatic focus target). Every class resolves to a semantic token or
+          a standard Tailwind scale utility — no hardcoded values.
+        */}
+        <a
+          href="#main-content"
+          className="sr-only rounded-md bg-surface px-4 py-2 text-sm font-medium text-accent shadow-dropdown focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50"
+        >
+          Skip to main content
+        </a>
+
         {/* Fixed-height app shell: the row is exactly the viewport height and
             clips its overflow, so `<main>` (below) becomes the only scroll
             region and the Sidebar + TopBar stay put as content scrolls. */}
@@ -193,10 +226,21 @@ export default function RootLayout({
             <TopBar />
 
             {/* The active route. It is the sole vertical scroll container so
-                the chrome above/left of it remains fixed; `p-6` gives the
-                data-dense screens comfortable, consistent padding from the
-                Tailwind spacing scale. */}
-            <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                the chrome above/left of it remains fixed; padding steps up from
+                `p-4` on narrow viewports to `p-6` from the `sm` breakpoint so
+                the data-dense screens stay comfortable without wasting space on
+                small screens (values from the Tailwind spacing scale).
+
+                `id="main-content"` is the skip-link target and `tabIndex={-1}`
+                makes this landmark a valid programmatic focus destination so the
+                skip link moves keyboard focus here. */}
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className="flex-1 overflow-y-auto p-4 outline-none sm:p-6"
+            >
+              {children}
+            </main>
           </div>
         </div>
       </body>

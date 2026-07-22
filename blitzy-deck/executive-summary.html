@@ -388,8 +388,8 @@
         <span class="eyebrow">Executive Summary</span>
         <h1>Finebank Dashboard</h1>
         <p class="subtitle">
-          An institutional portfolio-oversight interface — its foundation and design system
-          in place, with six screens mapped from the Figma design and ready to build.
+          An institutional portfolio-oversight interface — its shared shell, design system,
+          and five of six screens delivered, with the Overview screen remaining.
         </p>
         <div class="accent-bar"></div>
       </section>
@@ -397,22 +397,22 @@
       <!-- ===== 2. CONTENT: findings / KPI summary ===== -->
       <section>
         <span class="eyebrow">At a glance</span>
-        <h2>Foundation in place, scope defined</h2>
+        <h2>Shell and five screens delivered</h2>
         <div class="kpi-grid">
           <div class="kpi-card">
             <span class="kpi-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
-            <span class="kpi-value">6</span>
-            <span class="kpi-label">Screens planned</span>
+            <span class="kpi-value">5</span>
+            <span class="kpi-label">Screens delivered</span>
           </div>
           <div class="kpi-card">
             <span class="kpi-icon"><i data-lucide="component" aria-hidden="true"></i></span>
-            <span class="kpi-value">6</span>
-            <span class="kpi-label">Components planned</span>
+            <span class="kpi-value">10</span>
+            <span class="kpi-label">Components built</span>
           </div>
           <div class="kpi-card">
             <span class="kpi-icon"><i data-lucide="panels-top-left" aria-hidden="true"></i></span>
             <span class="kpi-value">1</span>
-            <span class="kpi-label">Shared shell planned</span>
+            <span class="kpi-label">Shared shell delivered</span>
           </div>
           <div class="kpi-card">
             <span class="kpi-icon"><i data-lucide="server-off" aria-hidden="true"></i></span>
@@ -468,15 +468,15 @@ flowchart TD
         <table class="styled">
           <caption class="sr-only">Account sections and their routes</caption>
           <thead>
-            <tr><th scope="col">Section</th><th scope="col">Route</th><th scope="col">Focus</th></tr>
+            <tr><th scope="col">Section</th><th scope="col">Route</th><th scope="col">Focus</th><th scope="col">Status</th></tr>
           </thead>
           <tbody>
-            <tr><td>Overview</td><td><span class="route">/overview</span></td><td>KPIs, NAV chart, alerts</td></tr>
-            <tr><td>Holdings</td><td><span class="route">/holdings</span></td><td>Data-dense positions table</td></tr>
-            <tr><td>Cash &amp; Collateral</td><td><span class="route">/cash-collateral</span></td><td>Liquidity &amp; collateral</td></tr>
-            <tr><td>Corporate Actions</td><td><span class="route">/corporate-actions</span></td><td>Events &amp; elections</td></tr>
-            <tr><td>Compliance</td><td><span class="route">/compliance</span></td><td>Alerts &amp; compliance panel</td></tr>
-            <tr><td>Reporting</td><td><span class="route">/reporting</span></td><td>Statements &amp; exports</td></tr>
+            <tr><td>Overview</td><td><span class="route">/overview</span></td><td>KPIs, NAV chart, alerts</td><td>Planned</td></tr>
+            <tr><td>Holdings</td><td><span class="route">/holdings</span></td><td>Data-dense positions table</td><td>Live</td></tr>
+            <tr><td>Cash &amp; Collateral</td><td><span class="route">/cash-collateral</span></td><td>Liquidity &amp; collateral</td><td>Live</td></tr>
+            <tr><td>Corporate Actions</td><td><span class="route">/corporate-actions</span></td><td>Events &amp; elections</td><td>Live</td></tr>
+            <tr><td>Compliance</td><td><span class="route">/compliance</span></td><td>Alerts &amp; compliance panel</td><td>Live</td></tr>
+            <tr><td>Reporting</td><td><span class="route">/reporting</span></td><td>Statements &amp; exports</td><td>Live</td></tr>
           </tbody>
         </table>
       </section>
@@ -620,7 +620,7 @@ flowchart LR
           <li><i data-lucide="download" aria-hidden="true"></i>Install dependencies with <code>npm install</code>.</li>
           <li><i data-lucide="play" aria-hidden="true"></i>Run <code>npm run dev</code> at <code>localhost:3000</code>.</li>
           <li><i data-lucide="package" aria-hidden="true"></i>Ship with <code>npm run build</code> on Vercel.</li>
-          <li><i data-lucide="git-branch" aria-hidden="true"></i>Next: shared shell, six screens, and the Recharts NAV chart.</li>
+          <li><i data-lucide="git-branch" aria-hidden="true"></i>Next: the Overview screen — KPI cards, NAV chart, and alerts.</li>
         </ul>
       </section>
 
@@ -628,10 +628,10 @@ flowchart LR
       <section class="slide-closing">
         <span class="closing-icon"><i data-lucide="check-circle-2" aria-hidden="true"></i></span>
         <span class="eyebrow">In summary</span>
-        <h2>Institutional foundation, ready to build</h2>
+        <h2>Five screens live, Overview next</h2>
         <ul>
-          <li>Review the foundation and design system.</li>
-          <li>Approve the plan to build the six screens.</li>
+          <li>Explore the shared shell and five delivered screens.</li>
+          <li>Approve the final Overview screen to complete the set.</li>
           <li>Preview deploys ship on every push.</li>
         </ul>
         <div class="brand-lockup"><span class="brand-dot"></span>Blitzy</div>

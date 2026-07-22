@@ -85,8 +85,15 @@ const CHANGE_SR_LABEL: Record<TrendDirection, string> = {
  * export (imported downstream as `import KpiCard from "@/components/KpiCard"`).
  */
 export interface KpiCardProps {
-  /** Short KPI label, e.g. "Assets Under Management". */
-  label: string;
+  /**
+   * Short KPI label, e.g. "Assets Under Management". Typically a plain string,
+   * but accepts a `ReactNode` so a label that unavoidably contains a numeric
+   * fragment (e.g. "Next 30 Days") can wrap that fragment in
+   * `font-mono tabular-nums`, keeping every numeric descendant on the monospace
+   * grid rather than in the sans label face (MJ-13). Prefer purely textual
+   * labels where possible; use mono fragments only for genuine numerics.
+   */
+  label: ReactNode;
   /**
    * Pre-formatted display value (produced by `@/lib/format` at the call site),
    * e.g. `"$468.2M"`. Rendered in `font-mono tabular-nums`.

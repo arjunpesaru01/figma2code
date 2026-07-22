@@ -32,6 +32,9 @@ import type {
   NavPoint,
   OverviewProps,
   HoldingsProps,
+  CashCollateralData,
+  CorporateActionsData,
+  ReportingData,
 } from "./types";
 
 /**
@@ -213,6 +216,16 @@ export const alerts: Alert[] = [
     title: "Concentration limit breach",
     message:
       "Equity allocation exceeds the 60% policy ceiling for this mandate. Rebalance before the next compliance review.",
+    // The 60% figure is a percent fragment so it renders through `formatPercent`
+    // in font-mono tabular-nums rather than as sans prose (MJ-12).
+    messageParts: [
+      { kind: "text", text: "Equity allocation exceeds the " },
+      { kind: "percent", value: 60, decimals: 0 },
+      {
+        kind: "text",
+        text: " policy ceiling for this mandate. Rebalance before the next compliance review.",
+      },
+    ],
     timestamp: "2024-06-28T13:42:00Z",
     category: "Compliance",
   },
@@ -222,6 +235,16 @@ export const alerts: Alert[] = [
     title: "Upcoming dividend ex-date",
     message:
       "AAPL trades ex-dividend on 2024-07-05. Confirm entitlement and position booking ahead of the record date.",
+    // The raw ISO date is a date fragment so it renders through `formatDate`
+    // ("Jul 5, 2024") in a mono <time>, never as a raw machine string (MJ-12).
+    messageParts: [
+      { kind: "text", text: "AAPL trades ex-dividend on " },
+      { kind: "date", iso: "2024-07-05" },
+      {
+        kind: "text",
+        text: ". Confirm entitlement and position booking ahead of the record date.",
+      },
+    ],
     timestamp: "2024-06-27T09:15:00Z",
     category: "Corporate Actions",
   },
@@ -240,6 +263,16 @@ export const alerts: Alert[] = [
     title: "Quarterly report available",
     message:
       "The Q2 2024 performance and attribution report is ready for review and distribution.",
+    // The "Q2 2024" quarter is a period fragment so it renders through
+    // `formatQuarter` in font-mono tabular-nums rather than as sans prose (MJ-12).
+    messageParts: [
+      { kind: "text", text: "The " },
+      { kind: "period", quarter: 2, year: 2024 },
+      {
+        kind: "text",
+        text: " performance and attribution report is ready for review and distribution.",
+      },
+    ],
     timestamp: "2024-06-25T11:00:00Z",
     category: "Reporting",
   },
@@ -265,4 +298,263 @@ export const overviewData: OverviewProps = {
  */
 export const holdingsData: HoldingsProps = {
   holdings,
+};
+
+/* -------------------------------------------------------------------------- */
+/* Cash & Collateral screen                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Static Cash & Collateral dataset backing `app/cash-collateral/page.tsx`.
+ *
+ * Internal consistency (relied upon by the screen's summary KPIs):
+ *   - `summary.totalCashBase` === Σ `cashBalances[].balanceBase`
+ *       (18,500,000 + 6,700,000 + 3,950,000 + 3,050,000 = 32,200,000).
+ *   - `summary.availableCashBase` === Σ balanceBase × availablePercent/100
+ *       (18,500,000 + 3,015,000 + 3,160,000 + 3,050,000 = 27,725,000).
+ *   - `summary.collateralPledgedBase` === Σ `postedValue` where direction = "pledged"
+ *       (11,760,000 + 5,000,000 + 3,990,000 = 20,750,000).
+ *   - `summary.collateralReceivedBase` === Σ `postedValue` where direction = "received"
+ *       (8,245,000).
+ *   - `collateralCoveragePercent` === round(pledged ÷ marginRequirement × 100, 1)
+ *       (20,750,000 ÷ 22,400,000 = 92.6%). Being < 100% models the coverage
+ *       SHORTFALL that alert `a3` ("Collateral shortfall risk") warns about.
+ *   - The USD Settlement cash line (18,500,000) reconciles with the "U.S. Dollar
+ *     Cash" holding (`h8`) in the holdings table.
+ *   - Every `postedValue` === round(marketValue × (1 − haircutPercent/100)).
+ */
+export const cashCollateralData: CashCollateralData = {
+  summary: {
+    totalCashBase: 32_200_000,
+    availableCashBase: 27_725_000,
+    collateralPledgedBase: 20_750_000,
+    collateralReceivedBase: 8_245_000,
+    marginRequirementBase: 22_400_000,
+    collateralCoveragePercent: 92.6, // < 100% ⇒ shortfall (see alert a3)
+  },
+  cashBalances: [
+    {
+      id: "cash-usd",
+      currency: "USD",
+      accountType: "Settlement",
+      balance: 18_500_000,
+      balanceBase: 18_500_000, // USD is the base currency (1:1)
+      availablePercent: 100,
+    },
+    {
+      id: "cash-eur",
+      currency: "EUR",
+      accountType: "Margin",
+      balance: 6_200_000,
+      balanceBase: 6_700_000, // ≈ 1.081 USD/EUR
+      availablePercent: 45,
+    },
+    {
+      id: "cash-gbp",
+      currency: "GBP",
+      accountType: "Custody",
+      balance: 3_100_000,
+      balanceBase: 3_950_000, // ≈ 1.274 USD/GBP
+      availablePercent: 80,
+    },
+    {
+      id: "cash-jpy",
+      currency: "JPY",
+      accountType: "Settlement",
+      balance: 480_000_000,
+      balanceBase: 3_050_000, // ≈ 0.00635 USD/JPY
+      availablePercent: 100,
+    },
+  ],
+  collateral: [
+    {
+      id: "col-1",
+      counterparty: "JPMorgan",
+      instrument: "US Treasury 4.25% 2034",
+      direction: "pledged",
+      marketValue: 12_000_000,
+      haircutPercent: 2,
+      postedValue: 11_760_000, // 12,000,000 × (1 − 0.02)
+    },
+    {
+      id: "col-2",
+      counterparty: "Goldman Sachs",
+      instrument: "Cash (USD)",
+      direction: "pledged",
+      marketValue: 5_000_000,
+      haircutPercent: 0,
+      postedValue: 5_000_000,
+    },
+    {
+      id: "col-3",
+      counterparty: "Barclays",
+      instrument: "iShares Core U.S. Aggregate Bond ETF",
+      direction: "pledged",
+      marketValue: 4_200_000,
+      haircutPercent: 5,
+      postedValue: 3_990_000, // 4,200,000 × (1 − 0.05)
+    },
+    {
+      id: "col-4",
+      counterparty: "Morgan Stanley",
+      instrument: "German Bund 2.30% 2033",
+      direction: "received",
+      marketValue: 8_500_000,
+      haircutPercent: 3,
+      postedValue: 8_245_000, // 8,500,000 × (1 − 0.03)
+    },
+  ],
+};
+
+/* -------------------------------------------------------------------------- */
+/* Corporate Actions screen                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Static Corporate Actions dataset backing `app/corporate-actions/page.tsx`.
+ *
+ * The AAPL dividend event (ex-date 2024-07-05) reconciles with alert `a2`
+ * ("Upcoming dividend ex-date"). Summary counts are derived from `events`
+ * relative to the account as-of date (2024-06-28):
+ *   - `pendingCount` (2)         — events with status "pending" (MSFT, BRK.B).
+ *   - `electionsRequiredCount` (1) — elective events with an `electionDeadline` (BRK.B).
+ *   - `next30DaysCount` (3)      — ex-date/deadline within 30 days: AAPL (07-05),
+ *                                  AGG (07-01), BRK.B deadline (07-22).
+ *   - `totalCount` (5)           — total tracked events.
+ */
+export const corporateActionsData: CorporateActionsData = {
+  summary: {
+    pendingCount: 2,
+    electionsRequiredCount: 1,
+    next30DaysCount: 3,
+    totalCount: 5,
+  },
+  events: [
+    {
+      id: "ca-1",
+      security: "AAPL",
+      securityName: "Apple Inc.",
+      type: "dividend",
+      description: "Quarterly cash dividend of $0.25 per share",
+      exDate: "2024-07-05",
+      payDate: "2024-07-18",
+      status: "confirmed",
+    },
+    {
+      id: "ca-2",
+      security: "MSFT",
+      securityName: "Microsoft Corp.",
+      type: "dividend",
+      description: "Quarterly cash dividend of $0.75 per share",
+      exDate: "2024-08-15",
+      payDate: "2024-09-12",
+      status: "pending",
+    },
+    {
+      id: "ca-3",
+      security: "NVDA",
+      securityName: "NVIDIA Corp.",
+      type: "split",
+      description: "10-for-1 forward stock split",
+      exDate: "2024-06-10",
+      payDate: "2024-06-07",
+      status: "processed",
+    },
+    {
+      id: "ca-4",
+      security: "BRK.B",
+      securityName: "Berkshire Hathaway Inc. Class B",
+      type: "vote",
+      description: "Annual meeting proxy vote",
+      exDate: "2024-07-22",
+      payDate: "2024-07-24",
+      status: "pending",
+      electionDeadline: "2024-07-22",
+    },
+    {
+      id: "ca-5",
+      security: "AGG",
+      securityName: "iShares Core U.S. Aggregate Bond ETF",
+      type: "dividend",
+      description: "Monthly income distribution",
+      exDate: "2024-07-01",
+      payDate: "2024-07-08",
+      status: "confirmed",
+    },
+  ],
+};
+
+/* -------------------------------------------------------------------------- */
+/* Reporting screen                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Static Reporting dataset backing `app/reporting/page.tsx`.
+ *
+ * The "Performance & Attribution — Q2 2024" report reconciles with alert `a4`
+ * ("Quarterly report available"). Summary counts are derived from `reports`:
+ *   - `availableCount` (3)   — status "available" (Performance, Holdings, Compliance).
+ *   - `scheduledCount` (1)   — status "scheduled" (Transaction Ledger).
+ *   - `generatingCount` (1)  — status "generating" (Risk & Exposure).
+ *   - `totalCount` (6)       — total tracked reports (incl. 1 archived).
+ */
+export const reportingData: ReportingData = {
+  summary: {
+    availableCount: 3,
+    scheduledCount: 1,
+    generatingCount: 1,
+    totalCount: 6,
+  },
+  reports: [
+    {
+      id: "rep-1",
+      name: "Performance & Attribution",
+      period: "Q2 2024",
+      format: "PDF",
+      status: "available",
+      generatedOn: "2024-06-25",
+      sizeKb: 2480,
+    },
+    {
+      id: "rep-2",
+      name: "Holdings Detail",
+      period: "Jun 2024",
+      format: "XLSX",
+      status: "available",
+      generatedOn: "2024-06-28",
+      sizeKb: 1160,
+    },
+    {
+      id: "rep-3",
+      name: "Risk & Exposure",
+      period: "Q2 2024",
+      format: "PDF",
+      status: "generating",
+    },
+    {
+      id: "rep-4",
+      name: "Compliance Summary",
+      period: "Jun 2024",
+      format: "PDF",
+      status: "available",
+      generatedOn: "2024-06-27",
+      sizeKb: 820,
+    },
+    {
+      id: "rep-5",
+      name: "Transaction Ledger",
+      period: "Q3 2024",
+      format: "CSV",
+      status: "scheduled",
+    },
+    {
+      id: "rep-6",
+      name: "Annual Review",
+      period: "FY 2023",
+      format: "PDF",
+      status: "archived",
+      generatedOn: "2024-01-15",
+      sizeKb: 5320,
+    },
+  ],
 };

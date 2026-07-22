@@ -34,6 +34,8 @@
 // bright gradients, no flashy fills.
 // -----------------------------------------------------------------------------
 
+import { useId, type CSSProperties } from "react";
+
 import type { NavPoint } from "@/lib/types";
 import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -104,60 +106,132 @@ function NavTooltip({ active, payload, label }: TooltipProps<number, string>) {
  * Renders the NAV / performance series as a muted, single-series area chart.
  *
  * Behavior:
- *   - Empty / malformed `data` (absent or zero-length) falls to a no-data
- *     placeholder rendered at a comparable height (AAP §5.2.3, §7.4.3) — we
- *     never hand Recharts an empty dataset.
- *   - Otherwise the series is drawn inside a `ResponsiveContainer` so it fills
- *     the width of its card while honoring the fixed pixel `height`.
+ *   - Every point is VALIDATED before rendering: a point is kept only when its
+ *     `date` parses to a real date AND its `value` is a finite number. Points
+ *     with an invalid/unparseable date or a NaN/Infinity value are dropped so
+ *     malformed data can never reach Recharts (MJ-07).
+ *   - When no valid points remain (absent, empty, or all-invalid `data`), the
+ *     chart falls to a no-data placeholder rendered at a comparable height
+ *     (AAP §5.2.3, §7.4.3) — we never hand Recharts an empty dataset.
+ *   - Otherwise the valid series is drawn inside a `ResponsiveContainer` so it
+ *     fills the width of its card while honoring the pixel `height`.
+ *
+ * ACCESSIBILITY (MJ-09): the `<figure>` is named by a visually-hidden
+ * `<figcaption>` and described by a visually-hidden data-semantics summary
+ * (period count + date range + latest value), and the `AreaChart` enables
+ * Recharts' `accessibilityLayer` so the series is keyboard-navigable.
+ *
+ * SIZING (MJ-08): the `height` is carried into class-based sizing via the
+ * `--nav-chart-height` CSS custom property consumed by the Tailwind arbitrary
+ * utility `h-[var(--nav-chart-height)]`, so the actual `height` is applied
+ * through the utility API rather than a raw inline `height` style. Recharts'
+ * `ResponsiveContainer` legitimately requires a numeric `height` (a component
+ * API, not a CSS style), so the chart itself receives `height` directly.
  *
  * @param data   - The NAV/performance points to plot.
  * @param height - Chart height in pixels (default `300`).
  */
 export default function NavChart({ data, height = 300 }: NavChartProps) {
-  // Phase 2 — no-data / malformed guard, rendered FIRST. The dynamic pixel
-  // height is a prop-driven layout dimension (matching the chart's own
-  // `ResponsiveContainer height`), so it is applied inline; all *visual* values
-  // (color, border, radius, spacing) still resolve to Tailwind tokens.
-  if (!data || data.length === 0) {
+  // Stable, collision-free ids for the figure's accessible name/description
+  // (this is a client component, so `useId` is available). Called
+  // unconditionally BEFORE any early return to satisfy the rules of hooks.
+  const titleId = useId();
+  const descId = useId();
+
+  // MJ-08: carry the height into class-based sizing via a CSS custom property.
+  // The Tailwind utility `h-[var(--nav-chart-height)]` applies the actual
+  // `height`, so no raw `height` CSS value is set inline.
+  const heightVar = { "--nav-chart-height": `${height}px` } as CSSProperties;
+
+  // MJ-07: keep only points with a parseable date AND a finite NAV value, so an
+  // invalid date or a NaN/Infinity reading can never reach Recharts.
+  const validData = (data ?? []).filter(
+    (point): point is NavPoint =>
+      point != null &&
+      typeof point.date === "string" &&
+      !Number.isNaN(new Date(point.date).getTime()) &&
+      typeof point.value === "number" &&
+      Number.isFinite(point.value),
+  );
+
+  // No-data / malformed guard: when no valid points remain, render the no-data
+  // placeholder at a comparable (token-var) height instead of an empty chart.
+  if (validData.length === 0) {
     return (
       <figure
         aria-label="NAV performance over time"
-        className="flex items-center justify-center rounded-card border border-border bg-surface p-4 text-sm text-text-muted"
-        style={{ height }}
+        className="flex h-[var(--nav-chart-height)] items-center justify-center rounded-card border border-border bg-surface p-4 text-sm text-text-muted"
+        style={heightVar}
       >
         No performance data available
       </figure>
     );
   }
 
+  // Data-semantics summary for assistive tech: period count + date range +
+  // latest value, all rendered through the shared formatters.
+  const firstLabel = formatDate(validData[0].date);
+  const lastLabel = formatDate(validData[validData.length - 1].date);
+  const latestValue = formatCompactCurrency(
+    validData[validData.length - 1].value,
+  );
+
   return (
     <figure
-      aria-label="NAV performance over time"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
       // `text-accent` sets the CSS `color` that `currentColor` resolves to for
       // every SVG stroke/fill below — the series color originates from a token.
       className="rounded-card border border-border bg-surface p-4 text-accent"
     >
+      {/* Visually-hidden accessible name + data-semantics description (MJ-09). */}
+      <figcaption id={titleId} className="sr-only">
+        NAV performance over time
+      </figcaption>
+      <p id={descId} className="sr-only">
+        {`Area chart of net asset value across ${validData.length} periods, from ${firstLabel} to ${lastLabel}, latest ${latestValue}.`}
+      </p>
       <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <AreaChart
+          accessibilityLayer
+          data={validData}
+          margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+        >
           {/* Hairline horizontal grid — muted via opacity, no vertical rules. */}
           <CartesianGrid
             stroke="currentColor"
             strokeOpacity={0.12}
             vertical={false}
           />
-          {/* X axis: month-end dates formatted "Jan 2024" via `formatDate`. */}
+          {/* X axis: month-end dates formatted "Jan 2024" via `formatDate`.
+              `fill` / `fillOpacity` (applied via the `tick` object below) render
+              the labels as muted `currentColor`. The monospace + `tabular-nums`
+              face (MJ-06) is applied in `app/globals.css` on Recharts' emitted
+              `.recharts-cartesian-axis-tick-value` class: Recharts strips
+              `className` from the `tick` object, so the mono face cannot be set
+              here and must be styled via that runtime class instead. */}
           <XAxis
             dataKey="date"
             tickFormatter={(value) => formatDate(value)}
-            tick={{ fill: "currentColor", fillOpacity: 0.65 }}
+            tick={{
+              fill: "currentColor",
+              fillOpacity: 0.65,
+            }}
             tickLine={false}
             axisLine={{ stroke: "currentColor", strokeOpacity: 0.2 }}
             minTickGap={24}
           />
-          {/* Y axis: compact currency ticks ("$468.2M") via `formatCompactCurrency`. */}
+          {/* Y axis: compact currency ticks ("$468.2M") via `formatCompactCurrency`.
+              Muted `currentColor` via `fill` / `fillOpacity`; the mono +
+              `tabular-nums` face (MJ-06) that keeps the currency ticks aligned to
+              the monospace grid is applied in `app/globals.css` (see the X axis
+              note above for why it cannot be set through the `tick` object). */}
           <YAxis
             tickFormatter={(value) => formatCompactCurrency(value)}
-            tick={{ fill: "currentColor", fillOpacity: 0.65 }}
+            tick={{
+              fill: "currentColor",
+              fillOpacity: 0.65,
+            }}
             tickLine={false}
             axisLine={false}
             width={64}

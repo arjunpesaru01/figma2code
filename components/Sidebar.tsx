@@ -28,6 +28,16 @@
  *   It is never copy-pasted into individual page files (AAP §0.8.2 "shared
  *   layout"; the user's positive example).
  *
+ * RESPONSIVE BEHAVIOR (breakpoint-aware rail):
+ *   The dashboard is desktop-first, but the rail must not starve the content
+ *   column on narrow viewports. Below the `lg` breakpoint the rail collapses to
+ *   an icon-only strip (`w-16`): the wordmark is hidden and each row centers its
+ *   icon with its text label kept as `sr-only` (still the accessible name, plus
+ *   a `title` tooltip for mouse users). From `lg` up it expands to the full
+ *   `w-sidebar` (256px) rail with the wordmark and left-aligned icon+label. On a
+ *   375px viewport this yields ~311px of content width instead of ~119px, so the
+ *   data-dense screens remain usable without a separate mobile navigation.
+ *
  * DESIGN-SYSTEM COMPLIANCE (AAP §0.3.2 / §0.5):
  *   Third-party UI/icon libraries are forbidden. This file uses semantic HTML
  *   (`<aside>` / `<nav>` / `<ul>` / `<a>`), Tailwind theme tokens from
@@ -196,19 +206,21 @@ export default function Sidebar() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <aside className="flex h-full min-h-screen w-sidebar flex-col border-r border-border bg-surface">
+    <aside className="flex h-full min-h-screen w-16 flex-col border-r border-border bg-surface lg:w-sidebar">
       {/* Brand / wordmark — aligned to the top-bar height so the sidebar header
-          and the TopBar share the same baseline in the shell. */}
-      <div className="flex h-topbar shrink-0 items-center gap-3 border-b border-border px-5">
+          and the TopBar share the same baseline in the shell. On the collapsed
+          rail (below `lg`) only the mark shows, centered; the "Finebank"
+          wordmark appears from `lg` up when the full-width rail has room. */}
+      <div className="flex h-topbar shrink-0 items-center justify-center gap-3 border-b border-border px-2 lg:justify-start lg:px-5">
         <span className="text-accent">{BRAND_MARK}</span>
-        <span className="font-sans text-base font-semibold tracking-tight text-text">
+        <span className="hidden font-sans text-base font-semibold tracking-tight text-text lg:inline">
           Finebank
         </span>
       </div>
 
       {/* Primary navigation — the six account sections, driven entirely by
           NAV_SECTIONS so the list stays in lockstep with the app/** routes. */}
-      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-3 py-4">
+      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-2 py-4 lg:px-3">
         <ul className="flex flex-col gap-1">
           {NAV_SECTIONS.map((section: NavSection) => {
             const active = isActive(section.href);
@@ -218,12 +230,18 @@ export default function Sidebar() {
                 <Link
                   href={section.href}
                   aria-current={active ? "page" : undefined}
+                  // On the collapsed rail the text label is `sr-only`, so a
+                  // native tooltip surfaces the section name for sighted mouse
+                  // users; the accessible name still comes from the label text.
+                  title={section.label}
                   className={[
                     // Base: dense, comfortable row with a persistent (usually
                     // transparent) left indicator so the active bar never
                     // shifts the layout. Color transitions respect reduced
-                    // motion via the motion-safe variant.
-                    "group flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm",
+                    // motion via the motion-safe variant. The row centers its
+                    // icon on the collapsed rail and left-aligns icon+label
+                    // from `lg` up.
+                    "group flex items-center justify-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm lg:justify-start",
                     "motion-safe:transition-colors motion-safe:ease-out",
                     active
                       ? // Active: soft accent well + accent ink + left bar.
@@ -234,7 +252,7 @@ export default function Sidebar() {
                   ].join(" ")}
                 >
                   {section.icon ? (ICONS[section.icon] ?? ICONS.overview) : null}
-                  <span className="truncate">{section.label}</span>
+                  <span className="truncate max-lg:sr-only">{section.label}</span>
                 </Link>
               </li>
             );

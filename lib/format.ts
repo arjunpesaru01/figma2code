@@ -107,6 +107,34 @@ export function formatCompactCurrency(
 }
 
 /**
+ * Format a bare count / quantity (e.g. a share or unit count) with thousands
+ * grouping — the single, central formatter for non-currency, non-percentage
+ * integer quantities.
+ *
+ * Uses `Intl.NumberFormat` with the default `"decimal"` style (NOT currency, so
+ * no `$`, and NOT percent). The default of **0** fraction digits yields a whole
+ * grouped integer; pass `decimals` for fractional quantities (e.g. fund units).
+ * Output belongs in a `font-mono tabular-nums` cell so quantity columns align
+ * to the same monospace grid as the currency/percentage columns — which is why
+ * quantities go through this shared helper rather than a raw `toLocaleString`
+ * at the call site (MN-03).
+ *
+ * @param value    - The count / quantity to format.
+ * @param decimals - Fixed fraction digits (min = max, default `0`).
+ * @returns The grouped quantity string, e.g. `formatQuantity(12500)` → `"12,500"`.
+ *
+ * @example
+ * formatQuantity(12500);        // "12,500"
+ * formatQuantity(1234.5, 2);    // "1,234.50"
+ */
+export function formatQuantity(value: number, decimals = 0): string {
+  return new Intl.NumberFormat(LOCALE, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+/**
  * Format a percentage value that is ALREADY in percent units.
  *
  * The input is treated as a percent figure (e.g. `13.6` → `"13.6%"`); it is
@@ -255,6 +283,27 @@ export function formatDate(
   return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone: "UTC" }).format(
     date,
   );
+}
+
+/**
+ * Format a calendar quarter + year as a period label, e.g. `"Q2 2024"`.
+ *
+ * Centralises period rendering so a quarter modeled structurally (a `quarter`
+ * number 1–4 plus a `year`) is never embedded as a raw literal in prose — the
+ * numeric parts (`2`, `2024`) then render inside a `font-mono tabular-nums`
+ * fragment at the call site, satisfying the numeric-contract requirement
+ * (MJ-12).
+ *
+ * @param quarter - Calendar quarter, `1`–`4`.
+ * @param year    - Four-digit calendar year.
+ * @returns The period label, e.g. `formatQuarter(2, 2024)` → `"Q2 2024"`.
+ *
+ * @example
+ * formatQuarter(2, 2024); // "Q2 2024"
+ * formatQuarter(4, 2023); // "Q4 2023"
+ */
+export function formatQuarter(quarter: number, year: number): string {
+  return `Q${quarter} ${year}`;
 }
 
 /**

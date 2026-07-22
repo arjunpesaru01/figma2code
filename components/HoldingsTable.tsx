@@ -25,11 +25,13 @@
  *     which is precisely what keeps each column's fractional width uniform. A
  *     raw number is never rendered directly, and figures never fall back to the
  *     body font.
- *   • DIRECTIONAL (+/-) STYLING via tokens. The two day-change columns are
- *     colored by the sign of the change through `trendDirection()` mapped over
- *     `CHANGE_COLOR` — no hardcoded hex. Direction is ALSO conveyed textually by
- *     the leading `+`/`-` in the formatted string, so color is never the sole
- *     signal (accessibility).
+ *   • DIRECTIONAL (+/-) STYLING via tokens. Each of the two day-change columns
+ *     is colored by the sign of ITS OWN value (the % cell from `dayChangePercent`,
+ *     the $ cell from `dayChangeValue`) through `trendDirection()` mapped over
+ *     `CHANGE_COLOR` — no hardcoded hex, and one column can never be miscolored
+ *     by the other's sign. Direction is ALSO conveyed textually by the leading
+ *     `+`/`-` in the formatted string, so color is never the sole signal
+ *     (accessibility).
  *   • ZERO HARDCODED STYLE VALUES. Every color / spacing / radius resolves to a
  *     `tailwind.config.ts` token or a standard Tailwind scale utility.
  *   • INSTITUTIONAL, MUTED, DATA-DENSE aesthetic (README L22-25): tight row
@@ -41,6 +43,7 @@ import type { Holding, TrendDirection } from "@/lib/types";
 import {
   formatCurrency,
   formatPercent,
+  formatQuantity,
   formatSignedCurrency,
   formatSignedPercent,
   trendDirection,
@@ -105,8 +108,13 @@ const COLUMNS: readonly ColumnDef[] = [
 /**
  * Shared cell class fragments. Centralised so padding/typography stay identical
  * across every cell and the monospace-alignment contract cannot drift.
- *   - HEADER_CELL: muted uppercase label typography in the SANS face; the
- *     per-column alignment utility is appended at render time.
+ *   - HEADER_CELL_BASE: the padding + muted uppercase label typography shared by
+ *     every column header.
+ *   - HEADER_CELL_TEXT: text-column header — left-aligned SANS (symbol, class).
+ *   - HEADER_CELL_NUMERIC: numeric-column header — right-aligned MONO +
+ *     `tabular-nums`, so the header label sits in the SAME monospace rhythm and
+ *     alignment as the figures beneath it (MN-03). Numeric headers therefore
+ *     never fall back to the body/sans font.
  *   - NUMERIC_CELL: the monospace + tabular-nums + right-align combo applied to
  *     EVERY figure; the color (primary ink or a directional token) is appended
  *     at render time.
@@ -115,8 +123,10 @@ const COLUMNS: readonly ColumnDef[] = [
  * scrolls horizontally (via the `overflow-x-auto` wrapper) instead of wrapping
  * and breaking vertical alignment on narrow viewports (desktop-first).
  */
-const HEADER_CELL =
-  "px-3 py-2 font-sans text-xs font-medium uppercase tracking-wide text-text-muted whitespace-nowrap";
+const HEADER_CELL_BASE =
+  "px-3 py-2 text-xs font-medium uppercase tracking-wide text-text-muted whitespace-nowrap";
+const HEADER_CELL_TEXT = `${HEADER_CELL_BASE} text-left font-sans`;
+const HEADER_CELL_NUMERIC = `${HEADER_CELL_BASE} text-right font-mono tabular-nums`;
 const NUMERIC_CELL =
   "px-3 py-2 align-middle text-right font-mono tabular-nums whitespace-nowrap";
 const TEXT_CELL = "px-3 py-2 align-middle text-left font-sans whitespace-nowrap";
@@ -152,9 +162,11 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
                 <th
                   key={column.id}
                   scope="col"
-                  className={`${HEADER_CELL} ${
-                    column.align === "right" ? "text-right" : "text-left"
-                  }`}
+                  className={
+                    column.align === "right"
+                      ? HEADER_CELL_NUMERIC
+                      : HEADER_CELL_TEXT
+                  }
                 >
                   {column.label}
                 </th>
@@ -175,10 +187,15 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
               </tr>
             ) : (
               holdings.map((holding) => {
-                // Direction derived once from the percentage change and applied
-                // to BOTH change columns so the %/$ pair is colored consistently.
-                const changeColor =
+                // Each day-change column is colored by the sign of ITS OWN value
+                // — the % cell from `dayChangePercent`, the $ cell from
+                // `dayChangeValue` — derived independently. Deriving both from a
+                // single field could color the dollar figure contrary to its own
+                // sign if the inputs ever disagree (MN-04).
+                const percentColor =
                   CHANGE_COLOR[trendDirection(holding.dayChangePercent)];
+                const valueColor =
+                  CHANGE_COLOR[trendDirection(holding.dayChangeValue)];
 
                 return (
                   <tr
@@ -202,9 +219,10 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
                     </td>
 
                     {/* Quantity is a share/unit count (not currency): grouped via
-                        toLocaleString, still inside a mono tabular-nums cell. */}
+                        the shared `formatQuantity` helper (MN-03), inside a mono
+                        tabular-nums cell so it aligns with the other columns. */}
                     <td className={`${NUMERIC_CELL} text-text`}>
-                      {holding.quantity.toLocaleString("en-US")}
+                      {formatQuantity(holding.quantity)}
                     </td>
 
                     {/* Unit price — cents precision (2dp). */}
@@ -222,13 +240,13 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
                       {formatPercent(holding.weight)}
                     </td>
 
-                    {/* Day change % — signed + sign-colored. */}
-                    <td className={`${NUMERIC_CELL} ${changeColor}`}>
+                    {/* Day change % — signed + colored by its own sign. */}
+                    <td className={`${NUMERIC_CELL} ${percentColor}`}>
                       {formatSignedPercent(holding.dayChangePercent)}
                     </td>
 
-                    {/* Day change $ — signed + sign-colored. */}
-                    <td className={`${NUMERIC_CELL} ${changeColor}`}>
+                    {/* Day change $ — signed + colored by its own sign. */}
+                    <td className={`${NUMERIC_CELL} ${valueColor}`}>
                       {formatSignedCurrency(holding.dayChangeValue)}
                     </td>
                   </tr>
