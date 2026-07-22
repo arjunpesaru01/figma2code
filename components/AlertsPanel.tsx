@@ -300,7 +300,13 @@ export default function AlertsPanel({
                 <p className="mt-1 font-sans text-xs text-text-muted">
                   <span>{alert.category}</span>
                   <span aria-hidden="true"> · </span>
-                  <time dateTime={alert.timestamp}>
+                  {/* The timestamp is a figure: render it in `font-mono
+                      tabular-nums` so dates align on the monospace grid, while
+                      the category label stays in the sans face (MJ-13). */}
+                  <time
+                    dateTime={alert.timestamp}
+                    className="font-mono tabular-nums"
+                  >
                     {formatDate(alert.timestamp, {
                       month: "short",
                       day: "numeric",

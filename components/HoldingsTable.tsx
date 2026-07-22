@@ -39,6 +39,7 @@
  *     deliberately unlike a bright consumer-fintech app.
  */
 
+import FigureText from "@/components/FigureText";
 import type { Holding, TrendDirection } from "@/lib/types";
 import {
   formatCurrency,
@@ -150,7 +151,17 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
     // corners. The inner wrapper enables horizontal scrolling for the dense
     // grid on narrow viewports without breaking the page layout.
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
-      <div className="overflow-x-auto">
+      {/* MJ-15: the horizontal scroll container is keyboard-focusable
+          (`tabIndex={0}`) and named (`role="region"` + `aria-label`) so
+          keyboard-only users can scroll the dense grid and assistive tech
+          announces it as a named region. The global `:focus-visible` rule
+          (app/globals.css) supplies the visible focus ring. */}
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Portfolio holdings"
+        tabIndex={0}
+      >
         <table className="w-full border-collapse text-sm">
           {/* Screen-reader-only caption: names the table for assistive tech
               without adding visible chrome to the dense institutional layout. */}
@@ -206,12 +217,20 @@ export default function HoldingsTable({ holdings }: HoldingsTableProps) {
                         muted secondary name line beneath. `font-normal` overrides
                         the UA <th> bold; the symbol span opts back into semibold. */}
                     <th scope="row" className={`${TEXT_CELL} font-normal`}>
-                      <span className="block font-semibold text-text">
+                      {/* Symbol is a compact instrument identifier (ticker or
+                          bond code such as "UST 4.25% 2034"); render it whole in
+                          the monospace tabular face so any embedded figures sit
+                          on the numeric grid (MJ-13). */}
+                      <span className="block font-mono font-semibold tabular-nums text-text">
                         {holding.symbol}
                       </span>
-                      <span className="block text-xs text-text-muted">
+                      {/* Descriptive name is prose that may embed figures (e.g.
+                          "U.S. Treasury Note 4.25% 2034"); `FigureText` wraps only
+                          those numeric fragments in `font-mono tabular-nums`,
+                          leaving the words in the sans face (MJ-13). */}
+                      <FigureText className="block text-xs text-text-muted">
                         {holding.name}
-                      </span>
+                      </FigureText>
                     </th>
 
                     <td className={`${TEXT_CELL} text-text-muted`}>

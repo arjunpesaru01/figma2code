@@ -37,7 +37,12 @@
  * tabular-nums` — never the body sans face — so that currency and percentage
  * figures use tabular (fixed-width) glyphs and align vertically when several
  * cards sit side by side (README: "Numbers/figures should use a monospace font
- * for tabular alignment"; AAP §0.8.2 negative example).
+ * for tabular alignment"; AAP §0.8.2 negative example). The single exception is
+ * an explicitly QUALITATIVE value (`valueVariant="text"`, e.g. a risk rating
+ * like "Moderate"): a non-numeric label must NOT be forced onto the numeric
+ * monospace grid, so it renders in the sans face while every genuine figure —
+ * including numeric fragments inside a `ReactNode` `hint` — stays monospace
+ * (MJ-13).
  *
  * ACCESSIBILITY
  *   - The card uses a `<dl>`/`<dt>`/`<dd>` micro-structure so the KPI label is
@@ -96,9 +101,19 @@ export interface KpiCardProps {
   label: ReactNode;
   /**
    * Pre-formatted display value (produced by `@/lib/format` at the call site),
-   * e.g. `"$468.2M"`. Rendered in `font-mono tabular-nums`.
+   * e.g. `"$468.2M"`. Rendered in `font-mono tabular-nums` by default so numeric
+   * figures align on the tabular grid. For a QUALITATIVE value that is not a
+   * number (e.g. a risk rating like `"Moderate"`), pass `valueVariant="text"`
+   * so it renders in the sans face rather than being forced onto the monospace
+   * numeric grid (MJ-13).
    */
   value: string;
+  /**
+   * Selects the typeface for {@link KpiCardProps.value}:
+   *   - `"numeric"` (default) → `font-mono tabular-nums`, for real figures.
+   *   - `"text"` → `font-sans`, for a qualitative label (e.g. `"Moderate"`).
+   */
+  valueVariant?: "numeric" | "text";
   /**
    * Optional pre-formatted signed change, e.g. `"+13.6%"` or `"-$82,800"`.
    * Rendered in `font-mono tabular-nums` and tinted by {@link KpiCardProps.direction}.
@@ -109,8 +124,14 @@ export interface KpiCardProps {
    * (`up` → positive, `down` → negative, `flat` → muted). Defaults to `"flat"`.
    */
   direction?: TrendDirection;
-  /** Optional secondary caption, e.g. `"YTD"` or `"As of Jun 28, 2024"`. */
-  hint?: string;
+  /**
+   * Optional secondary caption, e.g. `"YTD"` or `"As of Jun 30, 2024"`.
+   * Typically plain text, but accepts a `ReactNode` so a caption that contains
+   * a numeric fragment (e.g. a Value-at-Risk figure) can wrap that fragment in
+   * `font-mono tabular-nums`, keeping numerics on the monospace grid while the
+   * surrounding words stay in the sans face (MJ-13).
+   */
+  hint?: ReactNode;
   /**
    * Optional inline-SVG icon slot (an institutional line icon). No icon
    * library is used — pass inline SVG only. Rendered decoratively and hidden
@@ -175,6 +196,7 @@ function DirectionCaret({ direction }: { direction: TrendDirection }): JSX.Eleme
 export default function KpiCard({
   label,
   value,
+  valueVariant = "numeric",
   change,
   direction = "flat",
   hint,
@@ -183,7 +205,15 @@ export default function KpiCard({
   // Treat empty strings as "absent" so callers can pass `""` without rendering
   // an empty, mis-styled row (UI8: never render meaningless empty content).
   const hasChange = typeof change === "string" && change.length > 0;
-  const hasHint = typeof hint === "string" && hint.length > 0;
+  // `hint` is a `ReactNode`, so treat the "empty" sentinels (undefined / null /
+  // false / "") as absent; any other node (string, element, number) renders.
+  const hasHint =
+    hint !== undefined && hint !== null && hint !== false && hint !== "";
+  // Numeric values ride the monospace tabular grid; a qualitative value
+  // (`valueVariant="text"`, e.g. a risk rating) uses the sans face instead so a
+  // non-number is never placed on the numeric grid (MJ-13).
+  const valueTypography =
+    valueVariant === "text" ? "font-sans" : "font-mono tabular-nums";
 
   return (
     <article className="flex items-start justify-between gap-3 rounded-card border border-border bg-surface p-5 shadow-card">
@@ -196,8 +226,11 @@ export default function KpiCard({
           {label}
         </dt>
         <dd className="flex flex-col gap-1">
-          {/* Primary figure — the monospace-critical element. */}
-          <span className="font-mono text-2xl font-semibold leading-tight tabular-nums text-text">
+          {/* Primary figure — monospace tabular for real numerics; sans for a
+              qualitative rating (see `valueVariant`). */}
+          <span
+            className={`${valueTypography} text-2xl font-semibold leading-tight text-text`}
+          >
             {value}
           </span>
 

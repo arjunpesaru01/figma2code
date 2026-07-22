@@ -22,6 +22,9 @@
  *   • MONOSPACE NUMERICS (README L26) — the generated date and file-size columns
  *     render `font-mono tabular-nums text-right` (the date inside a `<time>`),
  *     so they align vertically; a not-yet-generated report shows a muted em dash.
+ *     The period column (MJ-08) is LEFT-aligned but likewise `font-mono
+ *     tabular-nums` so its "Q2 2024" / "FY 2023" year digits align down the
+ *     column as tabular data tokens.
  *   • FORMAT + STATUS conveyed by TEXT chips/badges (never color alone) on muted
  *     institutional token tints.
  *   • ZERO HARDCODED STYLE VALUES — every value resolves to a
@@ -95,6 +98,12 @@ const HEADER_CELL_NUMERIC = `${HEADER_CELL_BASE} text-right font-mono tabular-nu
 const NUMERIC_CELL =
   "px-3 py-2 align-middle text-right font-mono tabular-nums whitespace-nowrap text-text";
 const TEXT_CELL = "px-3 py-2 align-middle text-left font-sans whitespace-nowrap";
+// Period column (MJ-08): period codes ("Q2 2024", "Jun 2024", "FY 2023") are
+// LEFT-aligned category tokens rendered mono/tabular so their year digits align
+// vertically. Whole-cell mono keeps atomic codes like "Q2" intact (a per-figure
+// tokenizer would wrongly split the "Q" from the "2").
+const PERIOD_CELL =
+  "px-3 py-2 align-middle text-left font-mono tabular-nums whitespace-nowrap text-text-muted";
 
 /**
  * Report inventory table.
@@ -112,7 +121,16 @@ export default function ReportsTable({ rows }: ReportsTableProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
-      <div className="overflow-x-auto">
+      {/* MJ-15: keyboard-focusable (`tabIndex={0}`), named
+          (`role="region"` + `aria-label`) horizontal scroll region so
+          keyboard-only users can scroll the grid; the global `:focus-visible`
+          rule (app/globals.css) supplies the visible focus ring. */}
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Report inventory"
+        tabIndex={0}
+      >
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Report inventory</caption>
 
@@ -154,9 +172,7 @@ export default function ReportsTable({ rows }: ReportsTableProps) {
                     <span className="font-semibold text-text">{row.name}</span>
                   </th>
 
-                  <td className={`${TEXT_CELL} text-text-muted`}>
-                    {row.period}
-                  </td>
+                  <td className={PERIOD_CELL}>{row.period}</td>
 
                   {/* Output format — a neutral monospace chip so the short
                       uppercase codes (PDF / XLSX / CSV) read as data tokens. */}

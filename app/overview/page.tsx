@@ -34,8 +34,9 @@
  *     `font-mono tabular-nums`. No raw numbers are rendered and no figure falls
  *     back to the body font (README L26; AAP §0.8.2). The brief's anchor figures
  *     `$468.2M` (AUM) and `+13.6%` (YTD) are therefore visible on screen. The
- *     as-of calendar DATE is textual (not a tabular figure), so — consistent
- *     with `TopBar`/`AlertsPanel` — it renders in the sans face.
+ *     as-of calendar DATE — a numeric figure (day + year) — likewise renders in
+ *     `font-mono tabular-nums`, consistent with `TopBar`/`AlertsPanel`, so its
+ *     digits align down the shell (MJ-08).
  *   • TOKENS ONLY. Every color/spacing/radius/type resolves to a
  *     `tailwind.config.ts` token or a standard Tailwind scale utility — no
  *     inline `style`, no hex literals, no arbitrary `[…]` values (AAP §0.5.1).
@@ -119,14 +120,15 @@ export default function OverviewPage() {
         SCREEN HEADER — the single <h1> landmark for this route plus a muted,
         institutional context line. The TopBar already carries the persistent
         account chrome, so this stays light: the mandate name and the as-of
-        date (rendered in a semantic <time>, in the sans face because a calendar
-        date is textual, not a tabular figure). Token-only, no invented content.
+        date (rendered in a semantic <time> in font-mono tabular-nums so its
+        day/year digits align — consistent with TopBar/AlertsPanel, MJ-08).
+        Token-only, no invented content.
       */}
       <header className="space-y-1">
         <h1 className="font-sans text-2xl font-semibold text-text">Overview</h1>
         <p className="text-sm text-text-muted">
           {account.accountName} · As of{" "}
-          <time dateTime={account.asOf} className="font-sans">
+          <time dateTime={account.asOf} className="font-mono tabular-nums">
             {asOfLabel}
           </time>
         </p>
@@ -162,7 +164,15 @@ export default function OverviewPage() {
         <KpiCard
           label="Risk"
           value={account.riskLevel}
-          hint={`VaR ${formatPercent(account.varPercent)}`}
+          valueVariant="text"
+          hint={
+            <>
+              VaR{" "}
+              <span className="font-mono tabular-nums">
+                {formatPercent(account.varPercent)}
+              </span>
+            </>
+          }
           direction="flat"
         />
       </section>

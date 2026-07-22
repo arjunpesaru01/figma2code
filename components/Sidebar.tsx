@@ -31,11 +31,13 @@
  * RESPONSIVE BEHAVIOR (breakpoint-aware rail):
  *   The dashboard is desktop-first, but the rail must not starve the content
  *   column on narrow viewports. Below the `lg` breakpoint the rail collapses to
- *   an icon-only strip (`w-16`): the wordmark is hidden and each row centers its
- *   icon with its text label kept as `sr-only` (still the accessible name, plus
- *   a `title` tooltip for mouse users). From `lg` up it expands to the full
- *   `w-sidebar` (256px) rail with the wordmark and left-aligned icon+label. On a
- *   375px viewport this yields ~311px of content width instead of ~119px, so the
+ *   a compact strip (`w-20`): the wordmark is hidden and each row STACKS its
+ *   icon above a small, VISIBLE, wrapping text label (centered, `text-2xs`).
+ *   The label is a real on-screen label — not `sr-only` — so touch users, who
+ *   cannot hover to reveal a `title` tooltip, can still read every section name
+ *   (MN-09). From `lg` up the rail expands to the full `w-sidebar` (256px) rail
+ *   with the wordmark and a horizontal, left-aligned icon+label row. On a 375px
+ *   viewport the collapsed rail still leaves ~295px of content width, so the
  *   data-dense screens remain usable without a separate mobile navigation.
  *
  * DESIGN-SYSTEM COMPLIANCE (AAP §0.3.2 / §0.5):
@@ -206,7 +208,7 @@ export default function Sidebar() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <aside className="flex h-full min-h-screen w-16 flex-col border-r border-border bg-surface lg:w-sidebar">
+    <aside className="flex h-full min-h-screen w-20 flex-col border-r border-border bg-surface lg:w-sidebar">
       {/* Brand / wordmark — aligned to the top-bar height so the sidebar header
           and the TopBar share the same baseline in the shell. On the collapsed
           rail (below `lg`) only the mark shows, centered; the "Finebank"
@@ -230,18 +232,20 @@ export default function Sidebar() {
                 <Link
                   href={section.href}
                   aria-current={active ? "page" : undefined}
-                  // On the collapsed rail the text label is `sr-only`, so a
-                  // native tooltip surfaces the section name for sighted mouse
-                  // users; the accessible name still comes from the label text.
+                  // A native tooltip still surfaces the section name for mouse
+                  // users, but it is now a SUPPLEMENT: the label is rendered
+                  // visibly on the collapsed rail (below), so touch users who
+                  // cannot hover are no longer reliant on this tooltip (MN-09).
                   title={section.label}
                   className={[
                     // Base: dense, comfortable row with a persistent (usually
                     // transparent) left indicator so the active bar never
                     // shifts the layout. Color transitions respect reduced
-                    // motion via the motion-safe variant. The row centers its
-                    // icon on the collapsed rail and left-aligns icon+label
-                    // from `lg` up.
-                    "group flex items-center justify-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm lg:justify-start",
+                    // motion via the motion-safe variant. The row STACKS its
+                    // icon above the label on the collapsed rail (flex-col,
+                    // centered) and switches to a left-aligned horizontal
+                    // icon+label row from `lg` up.
+                    "group flex flex-col items-center gap-1 rounded-md border-l-2 px-1 py-2 text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3",
                     "motion-safe:transition-colors motion-safe:ease-out",
                     active
                       ? // Active: soft accent well + accent ink + left bar.
@@ -252,7 +256,9 @@ export default function Sidebar() {
                   ].join(" ")}
                 >
                   {section.icon ? (ICONS[section.icon] ?? ICONS.overview) : null}
-                  <span className="truncate max-lg:sr-only">{section.label}</span>
+                  <span className="max-lg:text-center max-lg:text-2xs max-lg:leading-tight lg:truncate">
+                    {section.label}
+                  </span>
                 </Link>
               </li>
             );

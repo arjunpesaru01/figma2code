@@ -45,6 +45,123 @@ const LOCALE = "en-US" as const;
 const DEFAULT_CURRENCY = "USD" as const;
 
 /**
+ * Maximum fraction digits accepted by `Number.prototype.toFixed` and
+ * `Intl.NumberFormat`. Precision beyond this range throws a `RangeError`, so
+ * every caller-supplied `decimals` is clamped into `[0, MAX_FRACTION_DIGITS]`
+ * before use (MN-05).
+ */
+const MAX_FRACTION_DIGITS = 20 as const;
+
+/**
+ * Deterministic "no data" glyph (an em dash) returned when a numeric formatter
+ * is handed a NON-FINITE value (`NaN` / `±Infinity`). It matches the
+ * placeholder already used by `NavChart`'s tooltip and the section tables, so a
+ * bad datum degrades to a consistent, readable dash instead of leaking `"NaN"`
+ * or `"∞"` into a `tabular-nums` numeric cell (MN-05).
+ */
+const NON_FINITE_FALLBACK = "\u2014" as const;
+
+/**
+ * Clamp a caller-supplied fraction-digit count into the valid, non-throwing
+ * range for `toFixed` / `Intl.NumberFormat`.
+ *
+ * A non-finite or non-integer input is floored, and the result is clamped to
+ * `[0, MAX_FRACTION_DIGITS]`, so an out-of-range or fractional `decimals` can
+ * never throw a `RangeError` — it degrades deterministically instead (MN-05).
+ *
+ * @param decimals - Requested fraction digits (possibly invalid).
+ * @returns A safe integer in `[0, MAX_FRACTION_DIGITS]`.
+ */
+function clampDecimals(decimals: number): number {
+  if (!Number.isFinite(decimals)) {
+    return 0;
+  }
+  return Math.min(Math.max(Math.floor(decimals), 0), MAX_FRACTION_DIGITS);
+}
+
+/**
+ * Round a value to `decimals` fraction digits using DECIMAL half-expansion
+ * (round half AWAY FROM ZERO), independent of IEEE-754 binary artifacts.
+ *
+ * `Number.prototype.toFixed` rounds the underlying binary double, so a value a
+ * developer authors as `1.45` (stored as `1.44999…`) rounds DOWN to `1.4` — the
+ * defect behind MJ-11. This helper instead rescales through the number's
+ * SHORTEST round-trip string form (`` `${magnitude}e${decimals}` ``), which
+ * recovers the intended decimal (`"1.45"` → `"1.45e1"` → exactly `14.5`),
+ * rounds that non-negative magnitude with `Math.round` (so halves always expand
+ * upward), then rescales back and reapplies the sign last. Thus `-1.45` → `-1.5`
+ * and `1.45` → `1.5`, while already-clean values are untouched (`13.6` → `13.6`,
+ * `-2.3` → `-2.3`).
+ *
+ * @param value    - The finite value to round (callers guard non-finite first).
+ * @param decimals - Non-negative fraction digits (already clamped).
+ * @returns The decimal-rounded number.
+ */
+function roundHalfAwayFromZero(value: number, decimals: number): number {
+  const sign = value < 0 ? -1 : 1;
+  const magnitude = Math.abs(value);
+  // Rescale via the shortest round-trip string so the intended decimal — not
+  // the binary approximation — is what gets rounded. Guard the pathological
+  // case where `magnitude` is small/large enough that `Number.prototype.toString`
+  // emits exponential notation (e.g. `1e-7`), which would make the template
+  // `` `${magnitude}e${decimals}` `` a malformed `"1e-7e1"` that parses to `NaN`
+  // (and would otherwise leak "NaN" into a numeric cell, MN-05). In that regime
+  // the binary approximation is already exact enough, so fall back to arithmetic
+  // scaling; the string path still governs every realistic decimal (1.45 → 1.5).
+  const rescaled = Number(`${magnitude}e${decimals}`);
+  const rounded = Number.isFinite(rescaled)
+    ? Math.round(rescaled)
+    : Math.round(magnitude * 10 ** decimals);
+  const result = Number(`${rounded}e-${decimals}`);
+  return sign * (Number.isFinite(result) ? result : rounded / 10 ** decimals);
+}
+
+/**
+ * Whether `iso` denotes a valid, real calendar date/instant.
+ *
+ * Returns `true` only when `iso` (a) parses to a real `Date` AND (b) — for a
+ * date-only `YYYY-MM-DD` string — round-trips its UTC year/month/day exactly.
+ * The round-trip guard rejects IMPOSSIBLE dates such as `"2024-02-30"` that
+ * `new Date` would otherwise silently roll forward into March (the defect
+ * behind MJ-07 in `NavChart`). Datetime strings carrying a time/offset
+ * component are validated by the parse check alone, so a UTC-normalized instant
+ * that legitimately lands on a different calendar day is not rejected.
+ *
+ * Exported so the single strict-validation rule is shared by `formatDate` (its
+ * malformed-input guard) and `NavChart` (its point filter), rather than being
+ * re-implemented divergently at each site.
+ *
+ * @param iso - Candidate ISO 8601 date or datetime string.
+ * @returns `true` when the string denotes a real calendar date/instant.
+ *
+ * @example
+ * isValidDateString("2024-06-30"); // true
+ * isValidDateString("2024-02-30"); // false (impossible → would roll to Mar 1)
+ * isValidDateString("not-a-date"); // false
+ */
+export function isValidDateString(iso: string): boolean {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  // Strict calendar guard for date-only inputs (`YYYY-MM-DD`): `new Date`
+  // silently rolls impossible dates over (e.g. "2024-02-30" -> Mar 1), so
+  // round-trip the parsed UTC components against the literal input.
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    if (
+      date.getUTCFullYear() !== Number(year) ||
+      date.getUTCMonth() + 1 !== Number(month) ||
+      date.getUTCDate() !== Number(day)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Format a value as a full currency string with thousands grouping.
  *
  * Uses `Intl.NumberFormat` with `style: "currency"`. The default of **0**
@@ -65,12 +182,17 @@ export function formatCurrency(
   value: number,
   options: { currency?: string; decimals?: number } = {},
 ): string {
+  // Non-finite guard (MN-05): never leak "NaN" / "∞" into a numeric cell.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
   const { currency = DEFAULT_CURRENCY, decimals = 0 } = options;
+  const fractionDigits = clampDecimals(decimals);
   return new Intl.NumberFormat(LOCALE, {
     style: "currency",
     currency,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 }
 
@@ -96,13 +218,18 @@ export function formatCompactCurrency(
   value: number,
   options: { currency?: string; decimals?: number } = {},
 ): string {
+  // Non-finite guard (MN-05): never leak "NaN" / "∞" into a numeric cell.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
   const { currency = DEFAULT_CURRENCY, decimals = 1 } = options;
+  const fractionDigits = clampDecimals(decimals);
   return new Intl.NumberFormat(LOCALE, {
     style: "currency",
     currency,
     notation: "compact",
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 }
 
@@ -128,9 +255,14 @@ export function formatCompactCurrency(
  * formatQuantity(1234.5, 2);    // "1,234.50"
  */
 export function formatQuantity(value: number, decimals = 0): string {
+  // Non-finite guard (MN-05): never leak "NaN" / "∞" into a numeric cell.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
+  const fractionDigits = clampDecimals(decimals);
   return new Intl.NumberFormat(LOCALE, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 }
 
@@ -150,7 +282,16 @@ export function formatQuantity(value: number, decimals = 0): string {
  * formatPercent(7, 0);      // "7%"
  */
 export function formatPercent(value: number, decimals = 1): string {
-  return `${value.toFixed(decimals)}%`;
+  // Non-finite guard (MN-05): never leak "NaN" / "∞" into a numeric cell.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
+  const fractionDigits = clampDecimals(decimals);
+  // Decimal half-expansion rounding (MJ-11): round the intended decimal, not
+  // the raw binary double, so an authored `-1.45` renders as `-1.5%` (not the
+  // `-1.4%` that a plain `toFixed` on the `1.44999…` double would produce).
+  const rounded = roundHalfAwayFromZero(value, fractionDigits);
+  return `${rounded.toFixed(fractionDigits)}%`;
 }
 
 /**
@@ -176,13 +317,19 @@ export function formatPercent(value: number, decimals = 1): string {
  * formatSignedPercent(-0.04);  // "0.0%"  (rounds to zero → no sign)
  */
 export function formatSignedPercent(value: number, decimals = 1): string {
-  // Round to the display precision BEFORE choosing a sign so near-zero inputs
-  // that round to zero are not given a false "+"/"-". `rounded === 0` also
-  // collapses negative zero (`-0 === 0`) to a plain, unsigned zero.
-  const rounded = Number(value.toFixed(decimals));
+  // Non-finite guard (MN-05): never leak "NaN" / "∞" into a numeric cell.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
+  const fractionDigits = clampDecimals(decimals);
+  // Round to the display precision with DECIMAL half-expansion (MJ-11) BEFORE
+  // choosing a sign — so an authored `-1.45` becomes `-1.5` (not `-1.4`) and a
+  // near-zero input that rounds to zero (e.g. `0.04` at 1 dp) is not given a
+  // false "+"/"-". `rounded === 0` also collapses negative zero to unsigned.
+  const rounded = roundHalfAwayFromZero(value, fractionDigits);
   const normalized = rounded === 0 ? 0 : rounded;
   const sign = normalized > 0 ? "+" : normalized < 0 ? "-" : "";
-  return `${sign}${Math.abs(normalized).toFixed(decimals)}%`;
+  return `${sign}${Math.abs(normalized).toFixed(fractionDigits)}%`;
 }
 
 /**
@@ -212,6 +359,11 @@ export function formatSignedCurrency(
   value: number,
   options: { currency?: string; decimals?: number; compact?: boolean } = {},
 ): string {
+  // Non-finite guard (MN-05): never emit a malformed "+—" / "-—"; degrade to
+  // the same deterministic dash the underlying formatters return.
+  if (!Number.isFinite(value)) {
+    return NON_FINITE_FALLBACK;
+  }
   const { compact = false, ...currencyOptions } = options;
   const magnitude = Math.abs(value);
   const formatted = compact
@@ -257,31 +409,20 @@ export function formatDate(
   iso: string,
   options: Intl.DateTimeFormatOptions = { month: "short", year: "numeric" },
 ): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
+  // Malformed / impossible input is handled defensively (AAP §5.2.3): return
+  // the raw `iso` unchanged when it does not denote a real calendar date. The
+  // strict parse + calendar round-trip rule (which rejects impossible dates
+  // like "2024-02-30" that `new Date` would roll forward) lives in the shared
+  // `isValidDateString` helper, so `NavChart`'s point filter applies the exact
+  // same check rather than a divergent re-implementation (MJ-07).
+  if (!isValidDateString(iso)) {
     return iso;
   }
-  // Strict calendar guard for date-only inputs (`YYYY-MM-DD`): `new Date` silently
-  // rolls impossible dates over (e.g. "2024-02-30" -> Mar 1), so round-trip the
-  // parsed UTC year/month/day against the literal input and fall back to the raw
-  // string on any mismatch. Datetime strings (with a time/offset component) are
-  // intentionally exempt — they rely on the NaN guard above — so a UTC-normalized
-  // instant that legitimately lands on a different calendar day is not rejected.
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (dateOnly) {
-    const [, year, month, day] = dateOnly;
-    if (
-      date.getUTCFullYear() !== Number(year) ||
-      date.getUTCMonth() + 1 !== Number(month) ||
-      date.getUTCDate() !== Number(day)
-    ) {
-      return iso;
-    }
-  }
   // `timeZone: "UTC"` is spread LAST so a caller-supplied `timeZone` cannot
-  // override the fixed-UTC display contract.
+  // override the fixed-UTC display contract — a date-only string such as
+  // "2024-01-31" never drifts to the previous month in negative-offset locales.
   return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone: "UTC" }).format(
-    date,
+    new Date(iso),
   );
 }
 
@@ -303,6 +444,20 @@ export function formatDate(
  * formatQuarter(4, 2023); // "Q4 2023"
  */
 export function formatQuarter(quarter: number, year: number): string {
+  // Validate the quarter (an integer 1–4) and a plausible calendar year
+  // (integer within 1–9999) (MN-05): an out-of-range quarter such as `9` or a
+  // non-finite/implausible year must not render a nonsensical "Q9 2024" label.
+  // Degrade to the deterministic no-data dash instead.
+  if (
+    !Number.isInteger(quarter) ||
+    quarter < 1 ||
+    quarter > 4 ||
+    !Number.isInteger(year) ||
+    year < 1 ||
+    year > 9999
+  ) {
+    return NON_FINITE_FALLBACK;
+  }
   return `Q${quarter} ${year}`;
 }
 
@@ -321,6 +476,14 @@ export function formatQuarter(quarter: number, year: number): string {
  * trendDirection(0);   // "flat"
  */
 export function trendDirection(value: number): TrendDirection {
+  // Explicit non-finite guard (MN-05): a `NaN` input is treated as a NEUTRAL,
+  // no-direction result rather than silently falling through the comparisons
+  // below to an implicit "flat". (`Infinity` / `-Infinity` intentionally still
+  // map to "up" / "down" so a legitimately extreme signed change keeps its
+  // direction.)
+  if (Number.isNaN(value)) {
+    return "flat";
+  }
   if (value > 0) {
     return "up";
   }

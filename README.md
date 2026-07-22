@@ -78,10 +78,10 @@ npm run lint
 
 ## Implementation Status
 
-This repository is being built incrementally from the Figma design. The
-**Screens**, **Project Structure**, and **Architecture & Conventions** sections
-below describe the _target_ architecture; the lists here clarify what is in
-place today versus what is still planned.
+This repository implements the full six-screen dashboard from the Figma design.
+The **Screens**, **Project Structure**, and **Architecture & Conventions**
+sections below describe the architecture; the list here summarizes what is in
+place.
 
 **Delivered**
 - Project scaffold and configuration (`package.json`, `tsconfig.json`,
@@ -99,29 +99,27 @@ place today versus what is still planned.
   `TopBar`, `KpiCard`, `HoldingsTable`, `NavChart` (Recharts), `AlertsPanel`,
   and the data-dense section tables `CashBalancesTable`, `CollateralTable`,
   `CorporateActionsTable`, and `ReportsTable`.
-- Five of the six screen routes under `app/`, each matching its Figma frame:
-  `/holdings`, `/cash-collateral`, `/corporate-actions`, `/compliance`, and
-  `/reporting`.
+- All six screen routes under `app/`, each matching its Figma frame:
+  `/overview` (the composite landing screen — KPI cards, the NAV chart, and a
+  compact alerts panel — that `/` redirects to), `/holdings`,
+  `/cash-collateral`, `/corporate-actions`, `/compliance`, and `/reporting`.
 - The standalone executive-summary deck under `blitzy-deck/`.
 
-**Planned**
-- The `/overview` screen route (`app/overview/page.tsx`) — the composite
-  landing screen (KPI cards, the NAV chart, and a compact alerts panel) that
-  `/` already redirects to. It is the remaining screen for the final
-  six-screen milestone.
+All six screens are in place. Remaining work is incremental quality hardening
+(accessibility, numeric typography, and documentation), not net-new screens.
 
 ## Screens
 
 The architecture is **one route per Figma frame**: each screen is its own App
 Router route, and all screens share a single layout (`app/layout.tsx`) with a
-persistent Sidebar and TopBar. The shared shell and five of the six routes are
-implemented; the landing route `/` redirects to `/overview`, which is the one
-remaining screen (see [Implementation Status](#implementation-status)). The six
-sections map to these routes:
+persistent Sidebar and TopBar. All six routes are implemented, and the landing
+route `/` redirects to `/overview` (see
+[Implementation Status](#implementation-status)). The six sections map to these
+routes:
 
 | Section           | Route                 | Status      |
 |-------------------|-----------------------|-------------|
-| Overview          | `/overview`           | Planned     |
+| Overview          | `/overview`           | Implemented |
 | Holdings          | `/holdings`           | Implemented |
 | Cash & Collateral | `/cash-collateral`    | Implemented |
 | Corporate Actions | `/corporate-actions`  | Implemented |
@@ -130,11 +128,10 @@ sections map to these routes:
 
 ## Project Structure
 
-- `app/` — the App Router directory. In place today: the shared shell
-  `layout.tsx`, the brand `icon.svg`, `globals.css`, the `/` → `/overview`
-  redirect (`page.tsx`), and one `page.tsx` per implemented screen
-  (`holdings/`, `cash-collateral/`, `corporate-actions/`, `compliance/`,
-  `reporting/`). Planned: `overview/page.tsx`.
+- `app/` — the App Router directory: the shared shell `layout.tsx`, the brand
+  `icon.svg`, `globals.css`, the `/` → `/overview` redirect (`page.tsx`), and
+  one `page.tsx` per screen (`overview/`, `holdings/`, `cash-collateral/`,
+  `corporate-actions/`, `compliance/`, `reporting/`).
 - `components/` — first-party presentational components: `Sidebar`, `TopBar`,
   `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`, and the data-dense
   section tables `CashBalancesTable`, `CollateralTable`,

@@ -50,7 +50,11 @@ import type {
 export const account: AccountPortfolio = {
   accountId: "ACC-100482",
   accountName: "Global Multi-Asset Composite",
-  asOf: "2024-06-28",
+  // As-of the month-end NAV strike date so the snapshot aligns with the NAV
+  // series terminal point (2024-06-30) and the headline AUM it equals (MJ-10);
+  // the prior value (2024-06-28) trailed the NAV endpoint by two days, plotting
+  // the last NAV point as "future" data relative to the displayed snapshot.
+  asOf: "2024-06-30",
   currency: "USD",
   aum: 468_200_000, // => "$468.2M" via the compact currency formatter
   dailyPnl: 6_320_000, // signed daily P&L in USD (+$6.3M)
@@ -415,7 +419,7 @@ export const cashCollateralData: CashCollateralData = {
  *
  * The AAPL dividend event (ex-date 2024-07-05) reconciles with alert `a2`
  * ("Upcoming dividend ex-date"). Summary counts are derived from `events`
- * relative to the account as-of date (2024-06-28):
+ * relative to the account as-of date (2024-06-30):
  *   - `pendingCount` (2)         — events with status "pending" (MSFT, BRK.B).
  *   - `electionsRequiredCount` (1) — elective events with an `electionDeadline` (BRK.B).
  *   - `next30DaysCount` (3)      — ex-date/deadline within 30 days: AAPL (07-05),

@@ -25,9 +25,11 @@
 //     accent defined in `tailwind.config.ts` (`colors.accent.DEFAULT`).
 //   * The series then uses `stroke="currentColor"` / `fill="currentColor"`,
 //     inheriting that accent — the color still ORIGINATES from a theme token.
-//   * Axes and gridlines reuse `currentColor` dimmed with numeric
-//     `strokeOpacity` / `fillOpacity`, reading as muted neutrals without a
-//     second hardcoded color.
+//   * Grid and axis LINES reuse `currentColor` dimmed with numeric
+//     `strokeOpacity`, reading as muted neutrals without a second hardcoded
+//     color. Axis TICK LABELS instead take an OPAQUE muted-text token via
+//     `app/globals.css` so their contrast meets WCAG AA (a dimmed accent
+//     failed); their color still originates from a theme token.
 //
 // The muted single-series area, hairline grid, and restrained fill deliver the
 // institutional, data-dense aesthetic the brief demands (README L22-L26) — no
@@ -37,7 +39,12 @@
 import { useId, type CSSProperties } from "react";
 
 import type { NavPoint } from "@/lib/types";
-import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/format";
+import {
+  formatCompactCurrency,
+  formatCurrency,
+  formatDate,
+  isValidDateString,
+} from "@/lib/format";
 import {
   Area,
   AreaChart,
@@ -48,6 +55,38 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipProps } from "recharts";
+
+/**
+ * Named chart layout/style constants.
+ *
+ * Every geometry and opacity value the chart hands to Recharts is centralized
+ * here rather than scattered as inline magic numbers, so the chart's visual
+ * rhythm is tunable from one place and each value is self-documenting. These are
+ * Recharts component-API values (SVG geometry / opacities), NOT CSS style
+ * values, so the zero-hardcoded-token rule (which governs colors/spacing/type)
+ * does not apply — colors still originate from theme tokens via the
+ * `currentColor` technique documented above.
+ */
+const CHART = {
+  /** Default `ResponsiveContainer` height in px (overridable via the `height` prop). */
+  defaultHeight: 300,
+  /** Plot margins in px — small symmetric top/right; flush bottom/left to the axes. */
+  margin: { top: 8, right: 8, bottom: 0, left: 0 },
+  /** Y-axis gutter width in px reserved for the compact-currency tick labels. */
+  yAxisWidth: 64,
+  /** Minimum px gap between X-axis date ticks before Recharts thins them. */
+  xAxisMinTickGap: 24,
+  /** Opacity of the hairline horizontal gridlines. */
+  gridOpacity: 0.12,
+  /** Opacity of the axis baseline and the hover cursor rule. */
+  axisLineOpacity: 0.2,
+  /** NAV series stroke width in px. */
+  seriesStrokeWidth: 2,
+  /** NAV series area fill opacity (restrained, institutional). */
+  seriesFillOpacity: 0.12,
+  /** Radius in px of the active (hovered) data dot. */
+  activeDotRadius: 4,
+} as const;
 
 /**
  * Public props for {@link NavChart}.
@@ -92,7 +131,9 @@ function NavTooltip({ active, payload, label }: TooltipProps<number, string>) {
 
   return (
     <div className="rounded-badge border border-border bg-surface px-3 py-2 shadow-dropdown">
-      <p className="text-2xs uppercase tracking-wide text-text-muted">
+      {/* Date label is a figure → monospace tabular so it aligns with the value
+          below and matches every other numeric surface (MJ-13). */}
+      <p className="font-mono text-2xs uppercase tracking-wide tabular-nums text-text-muted">
         {formatDate(dateLabel, { month: "short", year: "numeric" })}
       </p>
       <p className="font-mono text-sm tabular-nums text-text">
@@ -131,7 +172,10 @@ function NavTooltip({ active, payload, label }: TooltipProps<number, string>) {
  * @param data   - The NAV/performance points to plot.
  * @param height - Chart height in pixels (default `300`).
  */
-export default function NavChart({ data, height = 300 }: NavChartProps) {
+export default function NavChart({
+  data,
+  height = CHART.defaultHeight,
+}: NavChartProps) {
   // Stable, collision-free ids for the figure's accessible name/description
   // (this is a client component, so `useId` is available). Called
   // unconditionally BEFORE any early return to satisfy the rules of hooks.
@@ -143,13 +187,17 @@ export default function NavChart({ data, height = 300 }: NavChartProps) {
   // `height`, so no raw `height` CSS value is set inline.
   const heightVar = { "--nav-chart-height": `${height}px` } as CSSProperties;
 
-  // MJ-07: keep only points with a parseable date AND a finite NAV value, so an
-  // invalid date or a NaN/Infinity reading can never reach Recharts.
+  // MJ-07: keep only points with a REAL calendar date AND a finite NAV value,
+  // so an invalid/impossible date or a NaN/Infinity reading can never reach
+  // Recharts. `isValidDateString` (shared with `formatDate`) applies a strict
+  // parse + calendar round-trip, so an impossible date such as "2024-02-30" —
+  // which `new Date(...).getTime()` would silently ROLL FORWARD to Mar 1 and
+  // accept — is correctly rejected here too (MJ-07).
   const validData = (data ?? []).filter(
     (point): point is NavPoint =>
       point != null &&
       typeof point.date === "string" &&
-      !Number.isNaN(new Date(point.date).getTime()) &&
+      isValidDateString(point.date) &&
       typeof point.value === "number" &&
       Number.isFinite(point.value),
   );
@@ -184,74 +232,79 @@ export default function NavChart({ data, height = 300 }: NavChartProps) {
       // every SVG stroke/fill below — the series color originates from a token.
       className="rounded-card border border-border bg-surface p-4 text-accent"
     >
-      {/* Visually-hidden accessible name + data-semantics description (MJ-09). */}
-      <figcaption id={titleId} className="sr-only">
-        NAV performance over time
+      {/* VISIBLE chart title (the figure's accessible name) plus a
+          visually-hidden data-semantics description (period count + date range +
+          latest value) for assistive tech. Previously the title was `sr-only`,
+          leaving the chart with no on-screen heading; a visible institutional
+          caption now labels it while the richer summary stays screen-reader-only.
+          The title is dark primary ink (`text-text`) so it is NOT tinted by the
+          figure's `text-accent` color context (which drives the SVG series). */}
+      <figcaption
+        id={titleId}
+        className="mb-3 font-sans text-sm font-semibold text-text"
+      >
+        NAV Performance
       </figcaption>
       <p id={descId} className="sr-only">
         {`Area chart of net asset value across ${validData.length} periods, from ${firstLabel} to ${lastLabel}, latest ${latestValue}.`}
       </p>
       <ResponsiveContainer width="100%" height={height}>
-        <AreaChart
-          accessibilityLayer
-          data={validData}
-          margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-        >
+        <AreaChart accessibilityLayer data={validData} margin={CHART.margin}>
           {/* Hairline horizontal grid — muted via opacity, no vertical rules. */}
           <CartesianGrid
             stroke="currentColor"
-            strokeOpacity={0.12}
+            strokeOpacity={CHART.gridOpacity}
             vertical={false}
           />
-          {/* X axis: month-end dates formatted "Jan 2024" via `formatDate`.
-              `fill` / `fillOpacity` (applied via the `tick` object below) render
-              the labels as muted `currentColor`. The monospace + `tabular-nums`
-              face (MJ-06) is applied in `app/globals.css` on Recharts' emitted
-              `.recharts-cartesian-axis-tick-value` class: Recharts strips
-              `className` from the `tick` object, so the mono face cannot be set
-              here and must be styled via that runtime class instead. */}
+          {/* X axis: month-end dates formatted "Jan 2024" via `formatDate`. Tick
+              label COLOR and the monospace + `tabular-nums` face are BOTH set in
+              `app/globals.css` on Recharts' emitted
+              `.recharts-cartesian-axis-tick-value` class — Recharts strips
+              `className` from the `tick` object, so neither can be set here. That
+              rule pins an OPAQUE muted-text token at full opacity, which meets
+              WCAG AA contrast; the prior accent dimmed to 0.65 opacity failed
+              (~3.35:1). No `fill`/`fillOpacity` is set on `tick` so nothing
+              competes with the accessible CSS color. */}
           <XAxis
             dataKey="date"
             tickFormatter={(value) => formatDate(value)}
-            tick={{
-              fill: "currentColor",
-              fillOpacity: 0.65,
-            }}
             tickLine={false}
-            axisLine={{ stroke: "currentColor", strokeOpacity: 0.2 }}
-            minTickGap={24}
+            axisLine={{
+              stroke: "currentColor",
+              strokeOpacity: CHART.axisLineOpacity,
+            }}
+            minTickGap={CHART.xAxisMinTickGap}
           />
           {/* Y axis: compact currency ticks ("$468.2M") via `formatCompactCurrency`.
-              Muted `currentColor` via `fill` / `fillOpacity`; the mono +
-              `tabular-nums` face (MJ-06) that keeps the currency ticks aligned to
-              the monospace grid is applied in `app/globals.css` (see the X axis
-              note above for why it cannot be set through the `tick` object). */}
+              Tick color + monospace/`tabular-nums` face are applied via the same
+              `app/globals.css` tick-value rule as the X axis (see note above);
+              no `fill`/`fillOpacity` is set on `tick` here. */}
           <YAxis
             tickFormatter={(value) => formatCompactCurrency(value)}
-            tick={{
-              fill: "currentColor",
-              fillOpacity: 0.65,
-            }}
             tickLine={false}
             axisLine={false}
-            width={64}
+            width={CHART.yAxisWidth}
             domain={["auto", "auto"]}
           />
           {/* Token-styled custom tooltip; subtle accent cursor line. */}
           <Tooltip
             content={<NavTooltip />}
-            cursor={{ stroke: "currentColor", strokeOpacity: 0.2 }}
+            cursor={{ stroke: "currentColor", strokeOpacity: CHART.axisLineOpacity }}
           />
           {/* Single composite NAV series — restrained fill keeps it institutional. */}
           <Area
             type="monotone"
             dataKey="value"
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={CHART.seriesStrokeWidth}
             fill="currentColor"
-            fillOpacity={0.12}
+            fillOpacity={CHART.seriesFillOpacity}
             dot={false}
-            activeDot={{ r: 4, fill: "currentColor", strokeWidth: 0 }}
+            activeDot={{
+              r: CHART.activeDotRadius,
+              fill: "currentColor",
+              strokeWidth: 0,
+            }}
             isAnimationActive={false}
           />
         </AreaChart>

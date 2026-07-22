@@ -86,7 +86,7 @@ export default function HoldingsPage() {
         no invented filters, dates, or export affordances.
       */}
       <header className="flex flex-col gap-1">
-        <h1 className="font-sans text-xl font-semibold text-text">Holdings</h1>
+        <h1 className="font-sans text-2xl font-semibold text-text">Holdings</h1>
         <p className="text-sm text-text-muted">
           <span className="font-mono tabular-nums">{holdings.length}</span> positions
         </p>

@@ -102,7 +102,16 @@ export default function CashBalancesTable({ rows }: CashBalancesTableProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
-      <div className="overflow-x-auto">
+      {/* MJ-15: keyboard-focusable (`tabIndex={0}`), named
+          (`role="region"` + `aria-label`) horizontal scroll region so
+          keyboard-only users can scroll the grid; the global `:focus-visible`
+          rule (app/globals.css) supplies the visible focus ring. */}
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Cash balances by currency"
+        tabIndex={0}
+      >
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Cash balances by currency</caption>
 

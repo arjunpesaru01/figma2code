@@ -35,7 +35,7 @@ export interface AccountPortfolio {
   accountId: string;
   /** Human-readable account / mandate name shown in the header. */
   accountName: string;
-  /** As-of date (ISO 8601 date string, e.g. "2024-06-28"). */
+  /** As-of date (ISO 8601 date string, e.g. "2024-06-30"). */
   asOf: string;
   /** Reporting currency (ISO 4217), e.g. "USD". */
   currency: string;
@@ -358,7 +358,12 @@ export interface ReportItem {
  * Headline KPIs for the Reporting screen (report counts by status).
  */
 export interface ReportingSummary {
-  /** Number of reports ready to download. */
+  /**
+   * Number of reports whose generation has completed and that are marked
+   * `"available"` in the read-only inventory. (This phase is a read-only
+   * report register — no download/export action is exposed; see the Reporting
+   * screen notes and `ReportItem`.)
+   */
   availableCount: number;
   /** Number of reports scheduled to run. */
   scheduledCount: number;

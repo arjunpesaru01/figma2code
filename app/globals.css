@@ -106,7 +106,7 @@
 }
 
 /**
- * NAV chart axis ticks — monospace tabular numerics (MJ-06).
+ * NAV chart axis ticks — monospace tabular numerics + accessible color.
  * ---------------------------------------------------------------------------
  * The NAV/performance chart (`components/NavChart.tsx`, the ONLY Recharts
  * surface in the app) needs its X/Y axis tick labels in the monospace face with
@@ -132,7 +132,17 @@
  * at every other numeric call site — `font-family` still resolves to the
  * `--font-mono` next/font token — so this stays fully token-driven with zero
  * hardcoded font values.
+ *
+ * COLOR / CONTRAST (MJ-10): the same rule also sets `fill` to the muted-text
+ * token at full opacity. Recharts colors ticks via a `fill` PRESENTATION
+ * ATTRIBUTE (default `#808080`), which this author rule overrides (author CSS
+ * outranks presentation attributes). The opaque `colors.text.muted` token
+ * measures 5.82:1 on the white chart surface — WCAG AA for normal text —
+ * whereas the previous accent dimmed to 0.65 opacity did not (~3.35:1).
+ * `theme('colors.text.muted')` keeps the value token-driven — no hardcoded hex.
  */
 .recharts-cartesian-axis-tick-value {
   @apply font-mono tabular-nums;
+  fill: theme('colors.text.muted');
+  fill-opacity: 1;
 }

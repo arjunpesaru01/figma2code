@@ -40,8 +40,8 @@
  *   rendered mono/tabular through `KpiCard` / `ReportsTable` (README L26;
  *   Technical Specification §7.7.2). All KPI labels are purely TEXTUAL — no
  *   numeric fragment renders in the sans label face (MJ-13). The period column
- *   labels (e.g. "Q2 2024") are pre-composed textual strings authored in the
- *   dataset, shown in the inventory table.
+ *   codes (e.g. "Q2 2024") are pre-composed tokens authored in the dataset and
+ *   render mono/tabular in the inventory table so their year digits align.
  *
  * TAILWIND TOKENS ONLY
  *   Third-party UI libraries are forbidden (AAP §0.3.2/§0.5). Every color,
@@ -65,7 +65,7 @@ import { formatDate, formatQuantity } from "@/lib/format";
 export const metadata: Metadata = {
   title: "Reporting",
   description:
-    "Downloadable performance, holdings, risk, and compliance reports for the institutional portfolio.",
+    "Read-only inventory of performance, holdings, risk, and compliance reports tracked for the institutional portfolio.",
 };
 
 /**
@@ -89,10 +89,10 @@ export default function ReportingPage() {
     (alert) => alert.category === "Reporting",
   );
 
-  // As-of label for the header context line. This is a formatted CALENDAR DATE
-  // (textual prose), so it stays in `font-sans` — only true numeric figures use
-  // `font-mono tabular-nums` (README L26; the reviewer's MJ-12 nuance permits a
-  // formatted calendar date in prose to remain sans).
+  // As-of label for the header context line. The calendar DATE is a numeric
+  // figure (day + year), so it renders in `font-mono tabular-nums` inside a
+  // semantic <time> — consistent with the Overview header, TopBar, and
+  // AlertsPanel timestamps (README L26; MJ-08).
   const asOfLabel = formatDate(account.asOf, {
     month: "short",
     day: "numeric",
@@ -105,7 +105,10 @@ export default function ReportingPage() {
       <header className="space-y-1">
         <h1 className="font-sans text-2xl font-semibold text-text">Reporting</h1>
         <p className="font-sans text-sm text-text-muted">
-          {`${account.accountName} · As of ${asOfLabel}`}
+          {account.accountName} · As of{" "}
+          <time dateTime={account.asOf} className="font-mono tabular-nums">
+            {asOfLabel}
+          </time>
         </p>
       </header>
 
@@ -118,7 +121,7 @@ export default function ReportingPage() {
         <KpiCard
           label="Available"
           value={formatQuantity(summary.availableCount)}
-          hint="Ready to download"
+          hint="Generation complete"
         />
         <KpiCard
           label="Generating"

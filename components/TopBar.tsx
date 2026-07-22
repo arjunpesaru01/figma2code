@@ -103,9 +103,9 @@ function deriveInitials(name: string): string {
  *     tabular figures), a muted risk badge, and an identity avatar with the
  *     account initials.
  *
- * All numeric figures (the AUM) render in `font-mono tabular-nums` via the
- * shared `@/lib/format` helpers so they align to the same monospace grid used
- * across the dashboard; the calendar as-of date is allowed to use the sans face.
+ * All numeric figures — the AUM and the as-of DATE — render in `font-mono
+ * tabular-nums` via the shared `@/lib/format` helpers so every figure aligns to
+ * the same monospace grid used across the dashboard (MJ-13).
  *
  * @param props - See {@link TopBarProps}. `account` defaults to the static mock.
  * @returns The top bar header element.
@@ -113,7 +113,7 @@ function deriveInitials(name: string): string {
 export default function TopBar({ account = defaultAccount }: TopBarProps) {
   // Precompute display strings once. `formatDate` fixes the time zone to UTC so
   // a date-only ISO string never drifts a day in negative-offset locales; the
-  // medium date parts yield e.g. "Jun 28, 2024".
+  // medium date parts yield e.g. "Jun 30, 2024".
   const asOfLabel = formatDate(account.asOf, {
     month: "short",
     day: "numeric",
@@ -137,7 +137,7 @@ export default function TopBar({ account = defaultAccount }: TopBarProps) {
         <div className="mt-0.5 flex items-center gap-2 text-xs text-text-muted">
           <span className="truncate">
             As of{" "}
-            <time dateTime={account.asOf} className="font-sans">
+            <time dateTime={account.asOf} className="font-mono tabular-nums">
               {asOfLabel}
             </time>
           </span>

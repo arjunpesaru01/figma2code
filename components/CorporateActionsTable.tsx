@@ -29,6 +29,7 @@
  *     `tailwind.config.ts` token or standard Tailwind scale utility.
  */
 
+import FigureText from "@/components/FigureText";
 import type { CorporateAction, CorporateActionStatus, CorporateActionType } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 
@@ -139,7 +140,16 @@ export default function CorporateActionsTable({ rows }: CorporateActionsTablePro
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
-      <div className="overflow-x-auto">
+      {/* MJ-15: keyboard-focusable (`tabIndex={0}`), named
+          (`role="region"` + `aria-label`) horizontal scroll region so
+          keyboard-only users can scroll the grid; the global `:focus-visible`
+          rule (app/globals.css) supplies the visible focus ring. */}
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Corporate action events"
+        tabIndex={0}
+      >
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Corporate action events</caption>
 
@@ -182,9 +192,11 @@ export default function CorporateActionsTable({ rows }: CorporateActionsTablePro
                     <span className="block font-mono font-semibold tabular-nums text-text">
                       {row.security}
                     </span>
-                    <span className="block text-xs text-text-muted">
+                    {/* Issuer name may embed figures; FigureText keeps any
+                        numeric fragment monospace, prose stays sans (MJ-13). */}
+                    <FigureText className="block text-xs text-text-muted">
                       {row.securityName}
-                    </span>
+                    </FigureText>
                   </th>
 
                   <td className={`${TEXT_CELL} text-text`}>
@@ -192,7 +204,10 @@ export default function CorporateActionsTable({ rows }: CorporateActionsTablePro
                   </td>
 
                   <td className={`${TEXT_CELL} text-text-muted`}>
-                    {row.description}
+                    {/* Descriptions embed figures (e.g. "$0.25 per share",
+                        "10-for-1" split); FigureText renders those numeric
+                        fragments monospace while the words stay sans (MJ-13). */}
+                    <FigureText>{row.description}</FigureText>
                   </td>
 
                   <td className={DATE_CELL}>
