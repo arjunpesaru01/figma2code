@@ -42,6 +42,11 @@
       --gradient-accent: linear-gradient(90deg, #7A6DEC 0%, #5B39F3 50%, #4101DB 100%);
     }
 
+    /* Give <body> the deck's body font so Mermaid's off-screen text-measurement
+       probe (which it appends to <body>) measures flowchart labels in the same Inter
+       font they render in. Without this, labels are mis-measured and clip. */
+    body { font-family: var(--ff-body); }
+
     /* ---- base reveal surface ---- */
     .reveal {
       font-family: var(--ff-body);
@@ -344,6 +349,13 @@
       line-height: normal;
     }
     .reveal pre.mermaid svg { max-width: 100%; height: auto; }
+    /* Mermaid sizes each flowchart label's <foreignObject> to the measured text
+       width, so the reveal.js scale transform can clip the final anti-aliased pixel
+       via the default overflow:hidden. Let labels paint in full so no trailing
+       character is ever cut. */
+    .reveal pre.mermaid foreignObject { overflow: visible; }
+    .reveal pre.mermaid .nodeLabel,
+    .reveal pre.mermaid .edgeLabel { overflow: visible; }
 
     /* progress/controls tint */
     .reveal .progress { color: var(--blitzy-primary); }
@@ -619,6 +631,17 @@ flowchart LR
     mermaid.initialize({
       startOnLoad: false,
       theme: 'base',
+      // Flowchart label sizing fix (prevents clipped node labels). Mermaid measures
+      // each label's width from a probe element it appends to <body>; if <body> is
+      // not itself Inter, the probe is measured in the browser default font, which is
+      // a few px narrower per label than the Inter text that actually renders. Each
+      // <foreignObject overflow:hidden> label is then sized slightly too small and
+      // clips its trailing characters/words. Two coordinated corrections:
+      //   1. the `body { font-family: var(--ff-body) }` rule in the inline <style>
+      //      makes the probe measure in the same Inter font the labels render in; and
+      //   2. `wrappingWidth: 640` lifts the default ~200px cap so the longest
+      //      single-line labels (~290px) are sized to fit instead of being clipped.
+      flowchart: { htmlLabels: true, wrappingWidth: 640, useMaxWidth: true },
       themeVariables: {
         primaryColor: '#F2F0FE',
         primaryTextColor: '#333333',
@@ -629,17 +652,61 @@ flowchart LR
       }
     });
 
-    function renderDynamicVisuals() {
-      // Render any not-yet-processed Mermaid diagrams (v11 marks done nodes with data-processed).
-      try {
-        window.mermaid.run();
-      } catch (err) {
-        console.error('Mermaid render error:', err);
-      }
-      // (Re)hydrate Lucide SVG icons for the current DOM.
+    // (Re)hydrate Lucide SVG icons for the current DOM. Safe to call repeatedly:
+    // createIcons only replaces <i data-lucide> placeholders not yet turned into <svg>.
+    function hydrateIcons() {
       if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
       }
+    }
+
+    // Render the Mermaid diagram(s) that live inside the CURRENTLY VISIBLE slide only.
+    //
+    // Why render per-visible-slide (and only after fonts are ready):
+    //   reveal.js keeps every non-active slide at `display:none`. Mermaid v11 draws
+    //   flowchart labels as HTML inside <foreignObject> and sizes each one from a LIVE
+    //   DOM measurement. Measuring a `display:none` subtree — or measuring before the
+    //   Inter web font has actually applied — yields wrong text widths, so:
+    //     * TD flowchart labels get a foreignObject that is too narrow -> text is clipped;
+    //     * the LR flowchart with labeled edges gets NaN edge-label coordinates from the
+    //       dagre layout -> the SVG viewBox collapses to "-8 -8 16 16" (effectively
+    //       invisible) and emits `translate(undefined, NaN)` console errors.
+    //   Mermaid then stamps the element with `data-processed="true"`, so any later
+    //   re-invocation is a no-op and the broken render becomes permanent.
+    //
+    //   Rendering a diagram only once its slide is actually visible (and only after
+    //   `document.fonts.ready`) guarantees a correct measurement, so the single
+    //   `data-processed` render each diagram ever receives is the correct one. Diagrams
+    //   render lazily on slide entry; a direct hash load (e.g. #/2, #/11) also works
+    //   because the target slide is the visible current slide when `ready` fires.
+    async function renderVisibleDiagrams() {
+      var slide =
+        window.Reveal && typeof window.Reveal.getCurrentSlide === 'function'
+          ? window.Reveal.getCurrentSlide()
+          : null;
+      if (!slide) return;
+      var pending = Array.prototype.slice
+        .call(slide.querySelectorAll('pre.mermaid'))
+        .filter(function (el) {
+          return el.getAttribute('data-processed') !== 'true';
+        });
+      if (pending.length === 0) return;
+      try {
+        // Ensure web fonts are applied before Mermaid measures label text widths.
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+        // Scope the run to just this slide's un-processed diagrams.
+        await window.mermaid.run({ nodes: pending });
+      } catch (err) {
+        console.error('Mermaid render error:', err);
+      }
+    }
+
+    // Invoked on the reveal `ready` event and on every `slidechanged` event.
+    function renderDynamicVisuals() {
+      hydrateIcons();
+      renderVisibleDiagrams();
     }
 
     Reveal.initialize({
