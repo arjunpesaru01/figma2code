@@ -28,9 +28,11 @@ Quirks / preferences:
   consumer fintech app — precise typography, data-dense tables, muted
   professional color palette rather than bright SaaS colors
 - Numbers/figures should use a monospace font for tabular alignment
-- Source of design: the Figma "Finebank – Financial Management Dashboard
-  UI Kits" template (BankDash-style layout), attached separately in the
-  Build prompt step
+- Source of design: a Figma finance dashboard template (BankDash-style
+  layout), attached separately in the Build prompt step
+- Specifically, that design source is the Figma "Finebank – Financial
+  Management Dashboard UI Kits" template — the authoritative per-frame
+  visual reference for this build.
 
 ## Getting Started
 
@@ -74,11 +76,40 @@ npm start
 npm run lint
 ```
 
+## Implementation Status
+
+This repository is being built incrementally from the Figma design. The
+**Screens**, **Project Structure**, and **Architecture & Conventions** sections
+below describe the _target_ architecture; the lists here clarify what is in
+place today versus what is still planned.
+
+**Delivered**
+- Project scaffold and configuration (`package.json`, `tsconfig.json`,
+  `next.config.mjs`, `tailwind.config.ts`, `postcss.config.js`, `.eslintrc.json`,
+  `.gitignore`, `.nvmrc`).
+- The design-token layer (`tailwind.config.ts`) and global styles
+  (`app/globals.css`).
+- The typed data layer in `lib/`: `types.ts`, `mock-data.ts`, `format.ts`, and
+  `nav.ts`.
+- The landing route `app/page.tsx`, which redirects `/` to `/overview`.
+- The standalone executive-summary deck under `blitzy-deck/`.
+
+**Planned**
+- The shared application shell `app/layout.tsx` (rendering the Sidebar and
+  TopBar around every route).
+- The six presentational components under `components/`: `Sidebar`, `TopBar`,
+  `KpiCard`, `HoldingsTable`, `NavChart` (Recharts), and `AlertsPanel`.
+- The six screen routes under `app/`: `/overview`, `/holdings`,
+  `/cash-collateral`, `/corporate-actions`, `/compliance`, and `/reporting`.
+
 ## Screens
 
-Every screen is a distinct App Router route — **one route per Figma frame** —
-and they all share a single layout (`app/layout.tsx`) with a persistent
-Sidebar and TopBar. The landing route `/` redirects to `/overview`.
+The target architecture is **one route per Figma frame**: each screen is its
+own App Router route, and all screens share a single layout (`app/layout.tsx`)
+with a persistent Sidebar and TopBar. The landing route `/` already redirects
+to `/overview`; the per-screen routes and the shared shell are planned (see
+[Implementation Status](#implementation-status)). The six sections map to these
+routes:
 
 | Section           | Route                 |
 |-------------------|-----------------------|
@@ -91,10 +122,11 @@ Sidebar and TopBar. The landing route `/` redirects to `/overview`.
 
 ## Project Structure
 
-- `app/` — App Router routes (one `page.tsx` per screen), the root
-  `layout.tsx` (shared shell), and `globals.css`.
-- `components/` — first-party presentational components: `Sidebar`, `TopBar`,
-  `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`.
+- `app/` — the App Router directory. In place today: `page.tsx` (the `/` →
+  `/overview` redirect) and `globals.css`. Planned: the root `layout.tsx`
+  (shared shell) and one `page.tsx` per screen.
+- `components/` — _(planned)_ first-party presentational components: `Sidebar`,
+  `TopBar`, `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`.
 - `lib/` — `types.ts` (view models), `mock-data.ts` (static data), `format.ts`
   (monospace currency/percent formatters), and `nav.ts` (six-section route
   config).
@@ -107,8 +139,8 @@ These conventions are binding — please keep contributions consistent with them
 
 - **One route per screen** — never combine multiple screens into a single page
   with tabs or toggles.
-- **Shared layout** — the Sidebar and TopBar live in `app/layout.tsx` and are
-  never duplicated inside individual page files.
+- **Shared layout** — the Sidebar and TopBar belong in `app/layout.tsx` and
+  must never be duplicated inside individual page files.
 - **Tailwind CSS only** — no CSS-in-JS, styled-components, Bootstrap, MUI, or
   Ant Design; Tailwind utility classes are the sole styling approach.
 - **Static mock data only** — all data lives in `lib/mock-data.ts`; there are

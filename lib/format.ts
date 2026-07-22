@@ -128,33 +128,44 @@ export function formatPercent(value: number, decimals = 1): string {
 /**
  * Format a signed percentage, prefixing an explicit `"+"` for positive values.
  *
- * Negative values already carry their `"-"` sign from `toFixed`, so no prefix
- * is added for them; zero is rendered without a sign (e.g. `"0.0%"`). Useful
- * for day-change / P&L percentage indicators whose direction must read at a
- * glance.
+ * The value is FIRST rounded to the requested display precision, then the sign
+ * is derived from that rounded display value — so a magnitude that rounds to
+ * zero (e.g. `0.04` at 1 decimal) renders as an unsigned `"0.0%"` rather than a
+ * misleading `"+0.0%"` or `"-0.0%"`. Negative zero is normalized away. Positive
+ * values get an explicit `"+"`, negatives keep `"-"`, and a displayed zero gets
+ * no sign. Useful for day-change / P&L percentage indicators whose direction
+ * must read at a glance.
  *
  * @param value    - Signed percentage value in percent units.
  * @param decimals - Fixed fraction digits (default `1`).
  * @returns The signed percentage string.
  *
  * @example
- * formatSignedPercent(13.6);  // "+13.6%"
- * formatSignedPercent(-2.3);  // "-2.3%"
- * formatSignedPercent(0);     // "0.0%"
+ * formatSignedPercent(13.6);   // "+13.6%"
+ * formatSignedPercent(-2.3);   // "-2.3%"
+ * formatSignedPercent(0);      // "0.0%"
+ * formatSignedPercent(0.04);   // "0.0%"  (rounds to zero → no sign)
+ * formatSignedPercent(-0.04);  // "0.0%"  (rounds to zero → no sign)
  */
 export function formatSignedPercent(value: number, decimals = 1): string {
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(decimals)}%`;
+  // Round to the display precision BEFORE choosing a sign so near-zero inputs
+  // that round to zero are not given a false "+"/"-". `rounded === 0` also
+  // collapses negative zero (`-0 === 0`) to a plain, unsigned zero.
+  const rounded = Number(value.toFixed(decimals));
+  const normalized = rounded === 0 ? 0 : rounded;
+  const sign = normalized > 0 ? "+" : normalized < 0 ? "-" : "";
+  return `${sign}${Math.abs(normalized).toFixed(decimals)}%`;
 }
 
 /**
  * Format a signed currency amount, prefixing an explicit `"+"` or `"-"`.
  *
- * The sign is derived from `value` and prepended to the formatted magnitude of
- * `Math.abs(value)`; zero receives no sign. The magnitude is rendered through
- * {@link formatCurrency} by default, or {@link formatCompactCurrency} when
- * `options.compact` is `true`. `currency` and `decimals` are passed through to
- * the underlying formatter.
+ * The magnitude (`Math.abs(value)`) is rendered through {@link formatCurrency}
+ * by default, or {@link formatCompactCurrency} when `options.compact` is `true`.
+ * The sign is then derived from the ROUNDED DISPLAY value: if the magnitude
+ * formats identically to zero (e.g. `"$0"` or `"$0.0"`), no sign is added — so a
+ * sub-unit value never renders as a misleading `"-$0"` / `"+$0"`. `currency` and
+ * `decimals` are passed through to the underlying formatter.
  *
  * @param value   - Signed monetary amount in the target `currency`'s base units.
  * @param options - Optional overrides.
@@ -164,20 +175,28 @@ export function formatSignedPercent(value: number, decimals = 1): string {
  * @returns The signed currency string.
  *
  * @example
- * formatSignedCurrency(6_320_000);                 // "+$6,320,000"
- * formatSignedCurrency(-82_800);                   // "-$82,800"
+ * formatSignedCurrency(6_320_000);                    // "+$6,320,000"
+ * formatSignedCurrency(-82_800);                      // "-$82,800"
  * formatSignedCurrency(6_320_000, { compact: true }); // "+$6.3M"
+ * formatSignedCurrency(-0.3);                          // "$0"  (rounds to zero → no sign)
  */
 export function formatSignedCurrency(
   value: number,
   options: { currency?: string; decimals?: number; compact?: boolean } = {},
 ): string {
   const { compact = false, ...currencyOptions } = options;
-  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
   const magnitude = Math.abs(value);
   const formatted = compact
     ? formatCompactCurrency(magnitude, currencyOptions)
     : formatCurrency(magnitude, currencyOptions);
+  // Derive the sign from the ROUNDED DISPLAY value, not the raw input: when the
+  // magnitude formats identically to zero (a sub-cent / sub-unit value rounding
+  // to "$0" / "$0.0"), emit no sign so we never render a misleading "-$0"/"+$0".
+  const zeroFormatted = compact
+    ? formatCompactCurrency(0, currencyOptions)
+    : formatCurrency(0, currencyOptions);
+  const sign =
+    formatted === zeroFormatted ? "" : value > 0 ? "+" : value < 0 ? "-" : "";
   return `${sign}${formatted}`;
 }
 
@@ -185,20 +204,26 @@ export function formatSignedCurrency(
  * Format an ISO 8601 date string for display.
  *
  * Parses `iso` into a `Date` and formats it with `Intl.DateTimeFormat`. The
- * time zone is fixed to `"UTC"` (merged before caller options) so that a
- * date-only string such as `"2024-01-31"` never drifts to the previous month
- * in negative-offset locales. If `iso` cannot be parsed into a valid date, the
- * raw input is returned unchanged as a defensive fallback for malformed data
- * (per the technical specification's edge-case handling, §5.2.3).
+ * time zone is fixed to `"UTC"` — applied AFTER any caller `options` so it can
+ * never be overridden — so a date-only string such as `"2024-01-31"` never
+ * drifts to the previous month in negative-offset locales.
+ *
+ * Malformed input is handled defensively (per the technical specification's
+ * edge-case handling, §5.2.3): the raw `iso` is returned unchanged when either
+ * (a) it does not parse to a valid date, or (b) it is a date-only string whose
+ * calendar components do not round-trip — i.e. an impossible date such as
+ * `"2024-02-30"` that JavaScript would otherwise silently roll forward into
+ * March.
  *
  * @param iso     - An ISO 8601 date or datetime string, e.g. `"2024-01-31"`.
  * @param options - `Intl.DateTimeFormat` options (default `{ month: "short", year: "numeric" }`).
- * @returns The formatted date string, or the raw `iso` if it is unparseable.
+ * @returns The formatted date string, or the raw `iso` if it is malformed.
  *
  * @example
- * formatDate("2024-01-31");                               // "Jan 2024"
- * formatDate("2024-06-28", { dateStyle: "medium" });      // "Jun 28, 2024"
- * formatDate("not-a-date");                               // "not-a-date"
+ * formatDate("2024-01-31");                          // "Jan 2024"
+ * formatDate("2024-06-28", { dateStyle: "medium" }); // "Jun 28, 2024"
+ * formatDate("2024-02-30");                          // "2024-02-30" (impossible date → raw)
+ * formatDate("not-a-date");                          // "not-a-date"
  */
 export function formatDate(
   iso: string,
@@ -208,7 +233,26 @@ export function formatDate(
   if (Number.isNaN(date.getTime())) {
     return iso;
   }
-  return new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", ...options }).format(
+  // Strict calendar guard for date-only inputs (`YYYY-MM-DD`): `new Date` silently
+  // rolls impossible dates over (e.g. "2024-02-30" -> Mar 1), so round-trip the
+  // parsed UTC year/month/day against the literal input and fall back to the raw
+  // string on any mismatch. Datetime strings (with a time/offset component) are
+  // intentionally exempt — they rely on the NaN guard above — so a UTC-normalized
+  // instant that legitimately lands on a different calendar day is not rejected.
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    if (
+      date.getUTCFullYear() !== Number(year) ||
+      date.getUTCMonth() + 1 !== Number(month) ||
+      date.getUTCDate() !== Number(day)
+    ) {
+      return iso;
+    }
+  }
+  // `timeZone: "UTC"` is spread LAST so a caller-supplied `timeZone` cannot
+  // override the fixed-UTC display contract.
+  return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone: "UTC" }).format(
     date,
   );
 }

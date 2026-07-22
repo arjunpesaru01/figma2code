@@ -38,7 +38,7 @@
    * scrollbar across every scroll container. Colors resolve to tokens.
    */
   html {
-    height: 100%;
+    @apply h-full;
     scrollbar-width: thin;
     scrollbar-color: theme('colors.border.strong') transparent;
   }
@@ -85,12 +85,13 @@
   /**
    * WebKit/Blink scrollbar to match the Firefox `scrollbar-color` above.
    * Track is transparent (blends with any surface); the thumb is a muted
-   * structural border token that darkens to a subtle slate on hover. Widths
-   * are non-color sizing values, which the token policy permits.
+   * structural border token that darkens to a subtle slate on hover. The
+   * track/thumb size resolves to the `spacing.scrollbar` design token, so no
+   * raw sizing value is hardcoded here.
    */
   ::-webkit-scrollbar {
-    width: 0.625rem;
-    height: 0.625rem;
+    width: theme('spacing.scrollbar');
+    height: theme('spacing.scrollbar');
   }
   ::-webkit-scrollbar-track {
     background-color: transparent;

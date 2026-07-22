@@ -33,13 +33,18 @@ import type { Config } from "tailwindcss";
  *   model). Tokens are added under `theme.extend` so Tailwind's default
  *   scales remain available; we augment them, we do not replace them.
  *
- * FIGMA FIDELITY:
- *   The authoritative source for the exact hex/spacing values is the
- *   Figma "Finebank" template. The palette below is a coherent, muted
- *   institutional baseline; individual values are refined to match the
- *   frames during per-screen implementation. Because these are semantic
- *   tokens, refining a value here updates every consuming component
- *   without any component-level edits.
+ * TOKEN PROVENANCE:
+ *   These semantic tokens ARE the project's institutional design system —
+ *   they are the committed, authoritative values, not placeholders. Each
+ *   role is derived to satisfy the muted-institutional mandate above: a
+ *   light, cool slate/navy neutral ramp for `background`/`surface`/`border`/
+ *   `text`; a single restrained navy-indigo `accent`; and a desaturated
+ *   `positive`/`negative` pair for directional (gain/loss) figures. The
+ *   Figma "Finebank" template remains the per-screen reference: as each
+ *   frame is implemented, its exact values are reconciled here ONCE against
+ *   this same token API (AAP §0.5.4). Because the roles are semantic, any
+ *   such reconciliation propagates to every consuming component with no
+ *   component-level edits.
  */
 const config: Config = {
   /**
@@ -206,6 +211,7 @@ const config: Config = {
         "4.5": "1.125rem", // 18px
         sidebar: "16rem", // 256px — persistent left navigation width
         topbar: "4.5rem", // 72px — shared top bar height
+        scrollbar: "0.625rem", // 10px — thin institutional custom-scrollbar track/thumb
       },
     },
   },

@@ -243,9 +243,24 @@
     .kpi-label {
       font-size: 0.5em;
       letter-spacing: 0.04em;
-      color: var(--blitzy-gray);
+      color: var(--blitzy-ink);
       text-transform: uppercase;
       font-weight: 600;
+    }
+
+    /* =========================================================
+       UTILITY: SCREEN-READER-ONLY (visually hidden, exposed to AT)
+       ========================================================= */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     /* =========================================================
@@ -369,12 +384,12 @@
 
       <!-- ===== 1. TITLE ===== -->
       <section class="slide-title">
-        <span class="hero-icon"><i data-lucide="landmark"></i></span>
+        <span class="hero-icon"><i data-lucide="landmark" aria-hidden="true"></i></span>
         <span class="eyebrow">Executive Summary</span>
         <h1>Finebank Dashboard</h1>
         <p class="subtitle">
-          An institutional portfolio-oversight interface — built screen for screen from the
-          Figma design, ready for leadership review.
+          An institutional portfolio-oversight interface — its foundation and design system
+          in place, with six screens mapped from the Figma design and ready to build.
         </p>
         <div class="accent-bar"></div>
       </section>
@@ -382,25 +397,25 @@
       <!-- ===== 2. CONTENT: findings / KPI summary ===== -->
       <section>
         <span class="eyebrow">At a glance</span>
-        <h2>What we delivered</h2>
+        <h2>Foundation in place, scope defined</h2>
         <div class="kpi-grid">
           <div class="kpi-card">
-            <span class="kpi-icon"><i data-lucide="layout-dashboard"></i></span>
+            <span class="kpi-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
             <span class="kpi-value">6</span>
-            <span class="kpi-label">Dashboard screens</span>
+            <span class="kpi-label">Screens planned</span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-icon"><i data-lucide="component"></i></span>
+            <span class="kpi-icon"><i data-lucide="component" aria-hidden="true"></i></span>
             <span class="kpi-value">6</span>
-            <span class="kpi-label">Reusable components</span>
+            <span class="kpi-label">Components planned</span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-icon"><i data-lucide="panels-top-left"></i></span>
+            <span class="kpi-icon"><i data-lucide="panels-top-left" aria-hidden="true"></i></span>
             <span class="kpi-value">1</span>
-            <span class="kpi-label">Shared shell</span>
+            <span class="kpi-label">Shared shell planned</span>
           </div>
           <div class="kpi-card">
-            <span class="kpi-icon"><i data-lucide="server-off"></i></span>
+            <span class="kpi-icon"><i data-lucide="server-off" aria-hidden="true"></i></span>
             <span class="kpi-value">0</span>
             <span class="kpi-label">Backend services</span>
           </div>
@@ -410,10 +425,12 @@
       <!-- ===== 3. CONTENT: architecture Mermaid ===== -->
       <section>
         <span class="eyebrow">Architecture</span>
-        <h2>One shell, six screens</h2>
+        <h2>Target architecture: one shell, six screens</h2>
         <div class="mermaid-wrap">
           <pre class="mermaid">
 flowchart TD
+    accTitle: Application architecture
+    accDescr: The shared layout wraps the sidebar, top bar, and active route, and each screen composes presentational components that read from the lib data layer
     Layout["app/layout.tsx — Shared Shell"]
     Sidebar["Sidebar"]
     TopBar["TopBar"]
@@ -438,9 +455,9 @@ flowchart TD
 
       <!-- ===== 4. DIVIDER: What We Built ===== -->
       <section class="slide-divider">
-        <span class="divider-icon"><i data-lucide="layout-dashboard"></i></span>
+        <span class="divider-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
         <span class="eyebrow">Section 01</span>
-        <h2>What We Built</h2>
+        <h2>What We're Building</h2>
         <div class="accent-bar"></div>
       </section>
 
@@ -449,8 +466,9 @@ flowchart TD
         <span class="eyebrow">Screens</span>
         <h2>Six account sections</h2>
         <table class="styled">
+          <caption class="sr-only">Account sections and their routes</caption>
           <thead>
-            <tr><th>Section</th><th>Route</th><th>Focus</th></tr>
+            <tr><th scope="col">Section</th><th scope="col">Route</th><th scope="col">Focus</th></tr>
           </thead>
           <tbody>
             <tr><td>Overview</td><td><span class="route">/overview</span></td><td>KPIs, NAV chart, alerts</td></tr>
@@ -469,18 +487,18 @@ flowchart TD
         <h2>A distinct route per view</h2>
         <p>Every Figma frame is its own App Router page — never tabs on one screen. The sidebar highlights the active section.</p>
         <div class="icon-row">
-          <span class="chip"><i data-lucide="gauge"></i>/overview</span>
-          <span class="chip"><i data-lucide="wallet"></i>/holdings</span>
-          <span class="chip"><i data-lucide="banknote"></i>/cash-collateral</span>
-          <span class="chip"><i data-lucide="calendar-clock"></i>/corporate-actions</span>
-          <span class="chip"><i data-lucide="shield-check"></i>/compliance</span>
-          <span class="chip"><i data-lucide="file-text"></i>/reporting</span>
+          <span class="chip"><i data-lucide="gauge" aria-hidden="true"></i>/overview</span>
+          <span class="chip"><i data-lucide="wallet" aria-hidden="true"></i>/holdings</span>
+          <span class="chip"><i data-lucide="banknote" aria-hidden="true"></i>/cash-collateral</span>
+          <span class="chip"><i data-lucide="calendar-clock" aria-hidden="true"></i>/corporate-actions</span>
+          <span class="chip"><i data-lucide="shield-check" aria-hidden="true"></i>/compliance</span>
+          <span class="chip"><i data-lucide="file-text" aria-hidden="true"></i>/reporting</span>
         </div>
       </section>
 
       <!-- ===== 7. DIVIDER: Why It Matters ===== -->
       <section class="slide-divider">
-        <span class="divider-icon"><i data-lucide="trending-up"></i></span>
+        <span class="divider-icon"><i data-lucide="trending-up" aria-hidden="true"></i></span>
         <span class="eyebrow">Section 02</span>
         <h2>Why It Matters</h2>
         <div class="accent-bar"></div>
@@ -491,10 +509,10 @@ flowchart TD
         <span class="eyebrow">Business value</span>
         <h2>Trust you can see</h2>
         <ul class="value-list">
-          <li><i data-lucide="building-2"></i>Muted, institutional design signals credibility.</li>
-          <li><i data-lucide="align-right"></i>Monospace figures keep every column aligned.</li>
-          <li><i data-lucide="rocket"></i>Static mock data ships the UI fast, de-risked.</li>
-          <li><i data-lucide="cloud"></i>Vercel deploys on every push, zero ops.</li>
+          <li><i data-lucide="building-2" aria-hidden="true"></i>Muted, institutional design signals credibility.</li>
+          <li><i data-lucide="align-right" aria-hidden="true"></i>Monospace figures keep every column aligned.</li>
+          <li><i data-lucide="rocket" aria-hidden="true"></i>Static mock data ships the UI fast, de-risked.</li>
+          <li><i data-lucide="cloud" aria-hidden="true"></i>Vercel deploys on every push, zero ops.</li>
         </ul>
       </section>
 
@@ -503,8 +521,9 @@ flowchart TD
         <span class="eyebrow">Design system</span>
         <h2>Tokens, not guesswork</h2>
         <table class="styled">
+          <caption class="sr-only">Design token layers and their approach</caption>
           <thead>
-            <tr><th>Layer</th><th>Approach</th></tr>
+            <tr><th scope="col">Layer</th><th scope="col">Approach</th></tr>
           </thead>
           <tbody>
             <tr><td>Palette</td><td>Muted institutional roles as Tailwind tokens</td></tr>
@@ -517,7 +536,7 @@ flowchart TD
 
       <!-- ===== 10. DIVIDER: How It's Engineered ===== -->
       <section class="slide-divider">
-        <span class="divider-icon"><i data-lucide="cpu"></i></span>
+        <span class="divider-icon"><i data-lucide="cpu" aria-hidden="true"></i></span>
         <span class="eyebrow">Section 03</span>
         <h2>How It's Engineered</h2>
         <div class="accent-bar"></div>
@@ -528,8 +547,9 @@ flowchart TD
         <span class="eyebrow">Stack</span>
         <h2>Pinned and predictable</h2>
         <table class="styled">
+          <caption class="sr-only">Technology stack with pinned versions</caption>
           <thead>
-            <tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+            <tr><th scope="col">Layer</th><th scope="col">Technology</th><th scope="col">Version</th></tr>
           </thead>
           <tbody>
             <tr><td>Framework</td><td>Next.js — App Router</td><td><span class="ver">14.2.35</span></td></tr>
@@ -549,6 +569,8 @@ flowchart TD
         <div class="mermaid-wrap">
           <pre class="mermaid">
 flowchart LR
+    accTitle: Static data flow
+    accDescr: Typed view models and static mock constants pass as in-memory props to route pages and components with no network, API, or database
     Types["lib/types.ts<br/>view models"]
     Mock["lib/mock-data.ts<br/>static constants"]
     Pages["Route Pages<br/>app/**/page.tsx"]
@@ -566,7 +588,7 @@ flowchart LR
 
       <!-- ===== 13. DIVIDER: Risks & Mitigations ===== -->
       <section class="slide-divider">
-        <span class="divider-icon"><i data-lucide="shield-check"></i></span>
+        <span class="divider-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span>
         <span class="eyebrow">Section 04</span>
         <h2>Risks &amp; Mitigations</h2>
         <div class="accent-bar"></div>
@@ -577,8 +599,9 @@ flowchart LR
         <span class="eyebrow">Risk posture</span>
         <h2>Known risks, clear controls</h2>
         <table class="styled">
+          <caption class="sr-only">Risks and their mitigations</caption>
           <thead>
-            <tr><th>Risk</th><th>Mitigation</th></tr>
+            <tr><th scope="col">Risk</th><th scope="col">Mitigation</th></tr>
           </thead>
           <tbody>
             <tr><td>Design fidelity drift</td><td>Per-screen screenshot vs Figma frame</td></tr>
@@ -594,21 +617,21 @@ flowchart LR
         <span class="eyebrow">Getting started</span>
         <h2>Up and running in minutes</h2>
         <ul class="value-list">
-          <li><i data-lucide="download"></i>Install dependencies with <code>npm install</code>.</li>
-          <li><i data-lucide="play"></i>Run <code>npm run dev</code> at <code>localhost:3000</code>.</li>
-          <li><i data-lucide="package"></i>Ship with <code>npm run build</code> on Vercel.</li>
-          <li><i data-lucide="git-branch"></i>Next phase: live data and authentication.</li>
+          <li><i data-lucide="download" aria-hidden="true"></i>Install dependencies with <code>npm install</code>.</li>
+          <li><i data-lucide="play" aria-hidden="true"></i>Run <code>npm run dev</code> at <code>localhost:3000</code>.</li>
+          <li><i data-lucide="package" aria-hidden="true"></i>Ship with <code>npm run build</code> on Vercel.</li>
+          <li><i data-lucide="git-branch" aria-hidden="true"></i>Next: shared shell, six screens, and the Recharts NAV chart.</li>
         </ul>
       </section>
 
       <!-- ===== 16. CLOSING ===== -->
       <section class="slide-closing">
-        <span class="closing-icon"><i data-lucide="check-circle-2"></i></span>
+        <span class="closing-icon"><i data-lucide="check-circle-2" aria-hidden="true"></i></span>
         <span class="eyebrow">In summary</span>
-        <h2>Institutional UI, delivered</h2>
+        <h2>Institutional foundation, ready to build</h2>
         <ul>
-          <li>Review the six screens against Figma.</li>
-          <li>Approve for the live-data phase.</li>
+          <li>Review the foundation and design system.</li>
+          <li>Approve the plan to build the six screens.</li>
           <li>Preview deploys ship on every push.</li>
         </ul>
         <div class="brand-lockup"><span class="brand-dot"></span>Blitzy</div>
