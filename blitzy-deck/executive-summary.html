@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finebank Dashboard — Executive Summary</title>
+
+  <!-- FG-08: self-contained data-URI SVG favicon. Without an explicit icon the
+       browser auto-requests /favicon.ico, which 404s for this standalone single-file
+       deck. An inline data URI supplies the icon with zero network requests, keeping
+       the artifact fully self-contained. -->
+  <link
+    rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%235B39F3'/><circle cx='16' cy='16' r='6' fill='%2394FAD5'/></svg>"
+  />
+
+  <!-- Google Fonts: Inter (body), Space Grotesk (display), Fira Code (mono/eyebrows) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- reveal.js core stylesheet (our inline <style> below IS the theme; no reveal theme file).
+       Subresource Integrity (SRI): the sha384 digest is computed from the exact bytes jsDelivr
+       serves for this version-pinned URL, which jsDelivr guarantees are immutable, so the digest
+       stays valid for every future load. crossorigin="anonymous" is the required companion for SRI. -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"
+    integrity="sha384-YgvgKeZJykuztG+iQPoZHNZENTFZvOcOJ/uRzmJTje6GHYN9zAw+y5rx/L8MQKA/"
+    crossorigin="anonymous"
+  />
+
+  <style>
+    :root {
+      /* ---- Blitzy brand palette ---- */
+      --blitzy-primary: #5B39F3;
+      --blitzy-dark: #2D1C77;
+      --blitzy-teal: #94FAD5;
+      --blitzy-navy: #1A105F;
+      --blitzy-grad-start: #7A6DEC;
+      --blitzy-grad-mid: #5B39F3;
+      --blitzy-grad-end: #4101DB;
+      /* neutrals */
+      --blitzy-ink: #333333;
+      --blitzy-gray: #999999;
+      --blitzy-line: #D9D9D9;
+      --blitzy-mist: #F4EFF6;
+      --blitzy-cloud: #F5F5F5;
+      --blitzy-white: #FFFFFF;
+      /* ---- font families ---- */
+      --ff-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --ff-display: 'Space Grotesk', 'Inter', sans-serif;
+      --ff-mono: 'Fira Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+      /* ---- gradients ---- */
+      --gradient-hero: linear-gradient(68deg, #7A6DEC 15.56%, #5B39F3 62.74%, #4101DB 84.44%);
+      --gradient-accent: linear-gradient(90deg, #7A6DEC 0%, #5B39F3 50%, #4101DB 100%);
+    }
+
+    /* Give <body> the deck's body font so Mermaid's off-screen text-measurement
+       probe (which it appends to <body>) measures flowchart labels in the same Inter
+       font they render in. Without this, labels are mis-measured and clip. */
+    body { font-family: var(--ff-body); }
+
+    /* ---- base reveal surface ---- */
+    .reveal {
+      font-family: var(--ff-body);
+      font-size: 34px;
+      color: var(--blitzy-ink);
+    }
+    .reveal .slides {
+      text-align: left;
+    }
+    .reveal .slides section {
+      height: 100%;
+      padding: 70px 96px;
+      box-sizing: border-box;
+      background: var(--blitzy-white);
+    }
+    .reveal h1,
+    .reveal h2,
+    .reveal h3 {
+      font-family: var(--ff-display);
+      color: var(--blitzy-dark);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+      margin: 0 0 0.4em 0;
+      text-transform: none;
+    }
+    .reveal h1 { font-size: 2.15em; }
+    .reveal h2 { font-size: 1.5em; }
+    .reveal h3 { font-size: 1.05em; }
+    .reveal p { line-height: 1.4; margin: 0 0 0.6em 0; }
+    .reveal strong { color: var(--blitzy-primary); font-weight: 600; }
+    .reveal ul { display: block; margin: 0.2em 0 0 0; }
+    .reveal li { margin: 0 0 0.5em 0; line-height: 1.35; }
+    .reveal code {
+      font-family: var(--ff-mono);
+      background: var(--blitzy-mist);
+      color: var(--blitzy-dark);
+      padding: 0.08em 0.4em;
+      border-radius: 6px;
+      font-size: 0.86em;
+    }
+
+    /* ---- eyebrow (Fira Code kicker) ---- */
+    .eyebrow {
+      font-family: var(--ff-mono);
+      font-weight: 500;
+      font-size: 0.52em;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--blitzy-primary);
+      margin: 0 0 0.9em 0;
+      display: block;
+    }
+
+    /* ---- accent bar ---- */
+    .accent-bar {
+      width: 160px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--gradient-accent);
+      margin: 0.4em 0 0 0;
+    }
+
+    /* =========================================================
+       SLIDE TYPE: TITLE
+       ========================================================= */
+    .reveal section.slide-title {
+      background: var(--gradient-hero);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .reveal section.slide-title h1 { color: var(--blitzy-white); font-size: 2.6em; }
+    .reveal section.slide-title .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-title .subtitle {
+      font-size: 0.92em;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 24em;
+      font-weight: 400;
+    }
+    .reveal section.slide-title .hero-icon {
+      color: var(--blitzy-teal);
+      margin-bottom: 0.5em;
+    }
+    .reveal section.slide-title .hero-icon svg {
+      width: 84px;
+      height: 84px;
+      stroke-width: 1.5;
+    }
+    .reveal section.slide-title .accent-bar { margin-top: 1em; }
+
+    /* =========================================================
+       SLIDE TYPE: SECTION DIVIDER
+       ========================================================= */
+    .reveal section.slide-divider {
+      background: var(--blitzy-dark);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .reveal section.slide-divider h2 {
+      color: var(--blitzy-white);
+      font-size: 2.1em;
+    }
+    .reveal section.slide-divider .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-divider .divider-icon {
+      color: var(--blitzy-teal);
+      margin-bottom: 0.4em;
+    }
+    .reveal section.slide-divider .divider-icon svg {
+      width: 96px;
+      height: 96px;
+      stroke-width: 1.5;
+    }
+    .reveal section.slide-divider .accent-bar { margin: 0.6em auto 0; }
+
+    /* =========================================================
+       SLIDE TYPE: CLOSING
+       ========================================================= */
+    .reveal section.slide-closing {
+      background: var(--blitzy-navy);
+      color: var(--blitzy-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .reveal section.slide-closing h2 {
+      color: var(--blitzy-white);
+      font-size: 2.3em;
+    }
+    .reveal section.slide-closing .eyebrow { color: var(--blitzy-teal); }
+    .reveal section.slide-closing li { color: rgba(255, 255, 255, 0.92); }
+    .reveal section.slide-closing .closing-icon { color: var(--blitzy-teal); margin-bottom: 0.4em; }
+    .reveal section.slide-closing .closing-icon svg { width: 72px; height: 72px; stroke-width: 1.5; }
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      margin-top: 1.2em;
+      font-family: var(--ff-display);
+      font-weight: 700;
+      font-size: 0.9em;
+      color: var(--blitzy-white);
+    }
+    .brand-lockup .brand-dot {
+      width: 0.7em;
+      height: 0.7em;
+      border-radius: 50%;
+      background: var(--blitzy-teal);
+      display: inline-block;
+    }
+    .reveal section.slide-closing .accent-bar { margin-top: 0.8em; }
+
+    /* =========================================================
+       COMPONENT: KPI CARDS
+       ========================================================= */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      margin-top: 0.6em;
+    }
+    .kpi-card {
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 16px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kpi-icon {
+      color: var(--blitzy-primary);
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: var(--blitzy-mist);
+    }
+    .kpi-icon svg { width: 26px; height: 26px; stroke-width: 2; }
+    .kpi-value {
+      font-family: var(--ff-mono);
+      font-weight: 500;
+      font-size: 1.9em;
+      color: var(--blitzy-dark);
+      line-height: 1;
+    }
+    .kpi-label {
+      font-size: 0.5em;
+      letter-spacing: 0.04em;
+      color: var(--blitzy-ink);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* =========================================================
+       UTILITY: SCREEN-READER-ONLY (visually hidden, exposed to AT)
+       ========================================================= */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* =========================================================
+       COMPONENT: ICON ROW
+       ========================================================= */
+    .icon-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 0.7em;
+    }
+    .icon-row .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 999px;
+      padding: 14px 24px;
+      font-family: var(--ff-mono);
+      font-size: 0.62em;
+      color: var(--blitzy-dark);
+    }
+    .icon-row .chip svg {
+      width: 26px;
+      height: 26px;
+      color: var(--blitzy-primary);
+      stroke-width: 2;
+    }
+
+    /* value bullets with inline icons */
+    .value-list { list-style: none; margin: 0.4em 0 0 0; padding: 0; }
+    .value-list li {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 0.86em;
+    }
+    .value-list li svg {
+      width: 34px;
+      height: 34px;
+      color: var(--blitzy-primary);
+      flex: 0 0 auto;
+      stroke-width: 2;
+    }
+
+    /* =========================================================
+       COMPONENT: STYLED TABLE
+       ========================================================= */
+    .reveal table.styled {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5em;
+      font-size: 0.62em;
+    }
+    .reveal table.styled thead th {
+      text-align: left;
+      font-family: var(--ff-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.82em;
+      color: var(--blitzy-white);
+      background: var(--blitzy-primary);
+      padding: 16px 20px;
+      border: none;
+    }
+    .reveal table.styled thead th:first-child { border-radius: 10px 0 0 0; }
+    .reveal table.styled thead th:last-child { border-radius: 0 10px 0 0; }
+    .reveal table.styled tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--blitzy-line);
+      color: var(--blitzy-ink);
+      vertical-align: middle;
+    }
+    .reveal table.styled tbody tr:nth-child(even) { background: var(--blitzy-mist); }
+    .reveal table.styled td .route,
+    .reveal table.styled td .ver {
+      font-family: var(--ff-mono);
+      color: var(--blitzy-primary);
+    }
+
+    /* =========================================================
+       COMPONENT: MERMAID CONTAINER
+       ========================================================= */
+    .mermaid-wrap {
+      background: var(--blitzy-cloud);
+      border: 1px solid var(--blitzy-line);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 0.4em;
+      display: flex;
+      justify-content: center;
+    }
+    .reveal pre.mermaid {
+      background: transparent;
+      box-shadow: none;
+      width: 100%;
+      margin: 0;
+      font-size: 15px;
+      text-align: center;
+      line-height: normal;
+    }
+    .reveal pre.mermaid svg { max-width: 100%; height: auto; }
+    /* Mermaid sizes each flowchart label's <foreignObject> to the measured text
+       width, so the reveal.js scale transform can clip the final anti-aliased pixel
+       via the default overflow:hidden. Let labels paint in full so no trailing
+       character is ever cut. */
+    .reveal pre.mermaid foreignObject { overflow: visible; }
+    .reveal pre.mermaid .nodeLabel,
+    .reveal pre.mermaid .edgeLabel { overflow: visible; }
+
+    /* progress/controls tint */
+    .reveal .progress { color: var(--blitzy-primary); }
+    .reveal .controls { color: var(--blitzy-primary); }
+
+    /* FG-09: reveal.js navigation controls — accessibility hardening.
+       This inline <style> loads AFTER reveal.css, so equal-specificity rules win.
+       (1) WCAG 2.5.5 Target Size: force each control button to a >=44x44px hit
+           area (reveal's default arrow buttons render ~36x36px). min-width/height
+           expand the box without competing with reveal's own width/height.
+       (2) WCAG 2.4.7 Focus Visible: reveal draws no keyboard-focus indicator on its
+           control buttons; add a clearly visible brand-primary focus ring that only
+           appears for keyboard focus (:focus-visible), never on mouse click. */
+    .reveal .controls button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+    .reveal .controls button:focus-visible {
+      outline: 3px solid var(--blitzy-primary);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ===== 1. TITLE ===== -->
+      <section class="slide-title">
+        <span class="hero-icon"><i data-lucide="landmark" aria-hidden="true"></i></span>
+        <span class="eyebrow">Executive Summary</span>
+        <h1>Finebank Dashboard</h1>
+        <p class="subtitle">
+          An institutional portfolio-oversight interface — its shared shell, design system,
+          and all six screens delivered.
+        </p>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 2. CONTENT: findings / KPI summary ===== -->
+      <section>
+        <span class="eyebrow">At a glance</span>
+        <h2>Shell and six screens delivered</h2>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
+            <span class="kpi-value">6</span>
+            <span class="kpi-label">Screens delivered</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="component" aria-hidden="true"></i></span>
+            <span class="kpi-value">11</span>
+            <span class="kpi-label">Components built</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="panels-top-left" aria-hidden="true"></i></span>
+            <span class="kpi-value">1</span>
+            <span class="kpi-label">Shared shell delivered</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon"><i data-lucide="server-off" aria-hidden="true"></i></span>
+            <span class="kpi-value">0</span>
+            <span class="kpi-label">Backend services</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 3. CONTENT: architecture Mermaid ===== -->
+      <section>
+        <span class="eyebrow">Architecture</span>
+        <h2>Target architecture: one shell, six screens</h2>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart TD
+    accTitle: Application architecture
+    accDescr: The shared layout wraps the sidebar, top bar, and active route, and each screen composes presentational components that read from the lib data layer
+    Layout["app/layout.tsx — Shared Shell"]
+    Sidebar["Sidebar"]
+    TopBar["TopBar"]
+    Routes["Active Route (children)"]
+    Layout --> Sidebar
+    Layout --> TopBar
+    Layout --> Routes
+    Routes --> Overview["/overview"]
+    Routes --> Holdings["/holdings"]
+    Routes --> More["/cash-collateral · /corporate-actions<br/>/compliance · /reporting"]
+    Overview --> Kpi["KpiCard"]
+    Overview --> Nav["NavChart · Recharts"]
+    Overview --> Alerts["AlertsPanel"]
+    Holdings --> Table["HoldingsTable"]
+    Kpi --> Lib["lib/ — types · mock-data · format · nav"]
+    Table --> Lib
+    Nav --> Lib
+    Alerts --> Lib
+          </pre>
+        </div>
+      </section>
+
+      <!-- ===== 4. DIVIDER: What We Built ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
+        <span class="eyebrow">Section 01</span>
+        <h2>What We're Building</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 5. CONTENT: six screens table ===== -->
+      <section>
+        <span class="eyebrow">Screens</span>
+        <h2>Six account sections</h2>
+        <table class="styled">
+          <caption class="sr-only">Account sections and their routes</caption>
+          <thead>
+            <tr><th scope="col">Section</th><th scope="col">Route</th><th scope="col">Focus</th><th scope="col">Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Overview</td><td><span class="route">/overview</span></td><td>KPIs, NAV chart, alerts</td><td>Live</td></tr>
+            <tr><td>Holdings</td><td><span class="route">/holdings</span></td><td>Data-dense positions table</td><td>Live</td></tr>
+            <tr><td>Cash &amp; Collateral</td><td><span class="route">/cash-collateral</span></td><td>Liquidity &amp; collateral</td><td>Live</td></tr>
+            <tr><td>Corporate Actions</td><td><span class="route">/corporate-actions</span></td><td>Events &amp; elections</td><td>Live</td></tr>
+            <tr><td>Compliance</td><td><span class="route">/compliance</span></td><td>Alerts &amp; compliance panel</td><td>Live</td></tr>
+            <tr><td>Reporting</td><td><span class="route">/reporting</span></td><td>Statements &amp; report inventory</td><td>Live</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 6. CONTENT: one route per screen ===== -->
+      <section>
+        <span class="eyebrow">Routing</span>
+        <h2>A distinct route per view</h2>
+        <p>Every Figma frame is its own App Router page — never tabs on one screen. The sidebar highlights the active section.</p>
+        <div class="icon-row">
+          <span class="chip"><i data-lucide="gauge" aria-hidden="true"></i>/overview</span>
+          <span class="chip"><i data-lucide="wallet" aria-hidden="true"></i>/holdings</span>
+          <span class="chip"><i data-lucide="banknote" aria-hidden="true"></i>/cash-collateral</span>
+          <span class="chip"><i data-lucide="calendar-clock" aria-hidden="true"></i>/corporate-actions</span>
+          <span class="chip"><i data-lucide="shield-check" aria-hidden="true"></i>/compliance</span>
+          <span class="chip"><i data-lucide="file-text" aria-hidden="true"></i>/reporting</span>
+        </div>
+      </section>
+
+      <!-- ===== 7. DIVIDER: Why It Matters ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="trending-up" aria-hidden="true"></i></span>
+        <span class="eyebrow">Section 02</span>
+        <h2>Why It Matters</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 8. CONTENT: business value ===== -->
+      <section>
+        <span class="eyebrow">Business value</span>
+        <h2>Trust you can see</h2>
+        <ul class="value-list">
+          <li><i data-lucide="building-2" aria-hidden="true"></i>Muted, institutional design signals credibility.</li>
+          <li><i data-lucide="align-right" aria-hidden="true"></i>Monospace figures keep every column aligned.</li>
+          <li><i data-lucide="rocket" aria-hidden="true"></i>Static mock data ships the UI fast, de-risked.</li>
+          <li><i data-lucide="cloud" aria-hidden="true"></i>Vercel auto-detects the standard build — zero custom ops.</li>
+        </ul>
+      </section>
+
+      <!-- ===== 9. CONTENT: design system ===== -->
+      <section>
+        <span class="eyebrow">Design system</span>
+        <h2>Tokens, not guesswork</h2>
+        <table class="styled">
+          <caption class="sr-only">Design token layers and their approach</caption>
+          <thead>
+            <tr><th scope="col">Layer</th><th scope="col">Approach</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Palette</td><td>Muted institutional roles as Tailwind tokens</td></tr>
+            <tr><td>Typography</td><td>Display + monospace faces via <span class="ver">next/font</span></td></tr>
+            <tr><td>Numerics</td><td>Aligned via <span class="ver">font-mono tabular-nums</span></td></tr>
+            <tr><td>Styling</td><td>Tailwind utilities only — no CSS-in-JS</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 10. DIVIDER: How It's Engineered ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="cpu" aria-hidden="true"></i></span>
+        <span class="eyebrow">Section 03</span>
+        <h2>How It's Engineered</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 11. CONTENT: tech stack table ===== -->
+      <section>
+        <span class="eyebrow">Stack</span>
+        <h2>Pinned and predictable</h2>
+        <table class="styled">
+          <caption class="sr-only">Technology stack with pinned versions</caption>
+          <thead>
+            <tr><th scope="col">Layer</th><th scope="col">Technology</th><th scope="col">Version</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Framework</td><td>Next.js — App Router</td><td><span class="ver">14.2.35</span></td></tr>
+            <tr><td>UI runtime</td><td>React</td><td><span class="ver">18.3.1</span></td></tr>
+            <tr><td>Language</td><td>TypeScript — strict</td><td><span class="ver">5.9.3</span></td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS</td><td><span class="ver">3.4.19</span></td></tr>
+            <tr><td>Charts</td><td>Recharts</td><td><span class="ver">2.15.4</span></td></tr>
+            <tr><td>Runtime</td><td>Node.js LTS</td><td><span class="ver">20.x</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 12. CONTENT: data flow Mermaid ===== -->
+      <section>
+        <span class="eyebrow">Data flow</span>
+        <h2>Static data, in-memory props</h2>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart LR
+    accTitle: Static data flow
+    accDescr: Typed view models and static mock constants pass as in-memory props to route pages and components with no network, API, or database
+    Types["lib/types.ts<br/>view models"]
+    Mock["lib/mock-data.ts<br/>static constants"]
+    Pages["Route Pages<br/>app/**/page.tsx"]
+    Comps["Presentational<br/>Components"]
+    UI["Rendered UI"]
+    Types --> Mock
+    Mock -->|in-memory props| Pages
+    Pages -->|typed props| Comps
+    Comps --> UI
+    NoNet["No fetch · No API · No database"]
+    NoNet -.enforced.-> Mock
+          </pre>
+        </div>
+      </section>
+
+      <!-- ===== 13. DIVIDER: Risks & Mitigations ===== -->
+      <section class="slide-divider">
+        <span class="divider-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span>
+        <span class="eyebrow">Section 04</span>
+        <h2>Risks &amp; Mitigations</h2>
+        <div class="accent-bar"></div>
+      </section>
+
+      <!-- ===== 14. CONTENT: risks table ===== -->
+      <section>
+        <span class="eyebrow">Risk posture</span>
+        <h2>Known risks, clear controls</h2>
+        <table class="styled">
+          <caption class="sr-only">Risks and their mitigations</caption>
+          <thead>
+            <tr><th scope="col">Risk</th><th scope="col">Mitigation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Design fidelity drift</td><td>Per-screen screenshots captured; Figma-parity review open</td></tr>
+            <tr><td>Runtime drift</td><td>Node pinned <span class="ver">20.x</span> + committed lockfile</td></tr>
+            <tr><td>Scope creep</td><td>Six named screens, bounded</td></tr>
+            <tr><td>Static-only data</td><td>Explicit UI-only phase boundary</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ===== 15. CONTENT: onboarding / next steps ===== -->
+      <section>
+        <span class="eyebrow">Getting started</span>
+        <h2>Up and running in minutes</h2>
+        <ul class="value-list">
+          <li><i data-lucide="download" aria-hidden="true"></i>Install dependencies with <code>npm install</code>.</li>
+          <li><i data-lucide="play" aria-hidden="true"></i>Run <code>npm run dev</code> at <code>localhost:3000</code>.</li>
+          <li><i data-lucide="package" aria-hidden="true"></i>Ship with <code>npm run build</code> on Vercel.</li>
+          <li><i data-lucide="eye" aria-hidden="true"></i>Review each route against its Figma frame.</li>
+        </ul>
+      </section>
+
+      <!-- ===== 16. CLOSING ===== -->
+      <section class="slide-closing">
+        <span class="closing-icon"><i data-lucide="check-circle-2" aria-hidden="true"></i></span>
+        <span class="eyebrow">In summary</span>
+        <h2>All six screens live</h2>
+        <ul>
+          <li>Explore the shared shell and all six delivered screens.</li>
+          <li>Accessibility and performance already audit at 100/100.</li>
+          <li>Vercel-ready — standard build; design sign-off is the open item.</li>
+        </ul>
+        <div class="brand-lockup"><span class="brand-dot"></span>Blitzy</div>
+        <div class="accent-bar"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- reveal.js core (UMD, exposes window.Reveal). SRI sha384 pinned to jsDelivr's immutable bytes. -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"
+    integrity="sha384-M/JtqCVlLcK9lwVnBnMXP0V577CBULkjodKsR/PITOe4MSKNbbwqCemEyluOw0+5"
+    crossorigin="anonymous"
+  ></script>
+  <!-- Lucide icons (UMD, exposes window.lucide). SRI sha384 pinned to jsDelivr's immutable bytes. -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"
+    integrity="sha384-ieG+IKD0d/ZPXyCBTMVAbqsQdns8QGJR/e26WMw7M4fkaI/rHcS/YIoi+ah9WGge"
+    crossorigin="anonymous"
+  ></script>
+
+  <!-- Mermaid is ESM-only; import it as a module, expose on window, then wire reveal + render.
+       No SRI here by design: a module-internal `import` statement cannot carry an integrity
+       attribute (SRI attributes only apply to element-level <script src>/<link>), and this entry
+       point dynamically pulls in many hashed sub-chunks (chunk-*.mjs) that likewise cannot be
+       pinned. The version is pinned in the URL instead. -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      // Flowchart label sizing fix (prevents clipped node labels). Mermaid measures
+      // each label's width from a probe element it appends to <body>; if <body> is
+      // not itself Inter, the probe is measured in the browser default font, which is
+      // a few px narrower per label than the Inter text that actually renders. Each
+      // <foreignObject overflow:hidden> label is then sized slightly too small and
+      // clips its trailing characters/words. Two coordinated corrections:
+      //   1. the `body { font-family: var(--ff-body) }` rule in the inline <style>
+      //      makes the probe measure in the same Inter font the labels render in; and
+      //   2. `wrappingWidth: 640` lifts the default ~200px cap so the longest
+      //      single-line labels (~290px) are sized to fit instead of being clipped.
+      flowchart: { htmlLabels: true, wrappingWidth: 640, useMaxWidth: true },
+      themeVariables: {
+        primaryColor: '#F2F0FE',
+        primaryTextColor: '#333333',
+        primaryBorderColor: '#5B39F3',
+        lineColor: '#999999',
+        secondaryColor: '#F4EFF6',
+        fontFamily: "'Inter', sans-serif"
+      }
+    });
+
+    // (Re)hydrate Lucide SVG icons for the current DOM. Safe to call repeatedly:
+    // createIcons only replaces <i data-lucide> placeholders not yet turned into <svg>.
+    function hydrateIcons() {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    // Render the Mermaid diagram(s) that live inside the CURRENTLY VISIBLE slide only.
+    //
+    // Why render per-visible-slide (and only after fonts are ready):
+    //   reveal.js keeps every non-active slide at `display:none`. Mermaid v11 draws
+    //   flowchart labels as HTML inside <foreignObject> and sizes each one from a LIVE
+    //   DOM measurement. Measuring a `display:none` subtree — or measuring before the
+    //   Inter web font has actually applied — yields wrong text widths, so:
+    //     * TD flowchart labels get a foreignObject that is too narrow -> text is clipped;
+    //     * the LR flowchart with labeled edges gets NaN edge-label coordinates from the
+    //       dagre layout -> the SVG viewBox collapses to "-8 -8 16 16" (effectively
+    //       invisible) and emits `translate(undefined, NaN)` console errors.
+    //   Mermaid then stamps the element with `data-processed="true"`, so any later
+    //   re-invocation is a no-op and the broken render becomes permanent.
+    //
+    //   Rendering a diagram only once its slide is actually visible (and only after
+    //   `document.fonts.ready`) guarantees a correct measurement, so the single
+    //   `data-processed` render each diagram ever receives is the correct one. Diagrams
+    //   render lazily on slide entry; a direct hash load (e.g. #/2, #/11) also works
+    //   because the target slide is the visible current slide when `ready` fires.
+    async function renderVisibleDiagrams() {
+      var slide =
+        window.Reveal && typeof window.Reveal.getCurrentSlide === 'function'
+          ? window.Reveal.getCurrentSlide()
+          : null;
+      if (!slide) return;
+      var pending = Array.prototype.slice
+        .call(slide.querySelectorAll('pre.mermaid'))
+        .filter(function (el) {
+          return el.getAttribute('data-processed') !== 'true';
+        });
+      if (pending.length === 0) return;
+      try {
+        // Ensure web fonts are applied before Mermaid measures label text widths.
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+        // Scope the run to just this slide's un-processed diagrams.
+        await window.mermaid.run({ nodes: pending });
+      } catch (err) {
+        console.error('Mermaid render error:', err);
+      }
+    }
+
+    // Invoked on the reveal `ready` event and on every `slidechanged` event.
+    function renderDynamicVisuals() {
+      hydrateIcons();
+      renderVisibleDiagrams();
+    }
+
+    Reveal.initialize({
+      hash: true,
+      transition: 'slide',
+      controlsTutorial: false,
+      width: 1920,
+      height: 1080,
+      // FG-07: keep the deck in the standard fixed-slide model at every viewport
+      // width. reveal.js 5.x auto-activates its "scroll view" (a vertical reading
+      // mode that re-wraps every slide section inside a .scroll-page and abandons the
+      // horizontal slide index) once the window width is <= scrollActivationWidth
+      // (default 435px). In that mode the on-screen slide desynchronizes from both
+      // window.location.hash and Reveal.getIndices(), which is the reported wide ->
+      // narrow (<=435px) desync. Setting scrollActivationWidth to null disables the
+      // automatic switch, so a resize simply scales the current slide down to fit
+      // while its hash and index stay in lockstep.
+      scrollActivationWidth: null
+    });
+
+    Reveal.on('ready', renderDynamicVisuals);
+    Reveal.on('slidechanged', renderDynamicVisuals);
+  </script>
+</body>
+</html>

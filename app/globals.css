@@ -1,0 +1,148 @@
+/**
+ * app/globals.css — Finebank institutional dashboard: the single global stylesheet.
+ * ---------------------------------------------------------------------------
+ * Imported exactly once, by `app/layout.tsx` (`import "./globals.css";`). This
+ * file is the Tailwind CSS entry point PLUS a deliberately thin, token-driven
+ * institutional base layer. It contains no page or component styling — the
+ * heavy lifting (palette, spacing, radii, type scale) lives in
+ * `tailwind.config.ts`, and the display/monospace faces are wired via
+ * `next/font` in `app/layout.tsx` (exposed as `--font-sans` / `--font-mono`).
+ * Here we simply APPLY those tokens to the document root so every screen
+ * inherits the same muted, professional canvas without duplicating values.
+ *
+ * DESIGN SYSTEM (AAP §0.5): third-party UI/CSS frameworks are forbidden, so
+ * Tailwind tokens + next/font + the first-party components ARE the design
+ * system. Consequently every color in this file resolves to a semantic token
+ * from `tailwind.config.ts` (`background`, `surface`, `border`, `text`,
+ * `positive`, `negative`, `accent`, …) — there are zero hardcoded hex values.
+ *
+ * INVARIANTS (do not break):
+ *   • The three `@tailwind` directives below MUST stay first and in order.
+ *   • No `@import` of external CSS or fonts, and no non-Tailwind framework.
+ *   • The document default font is the SANS face; numeric surfaces opt into
+ *     `font-mono tabular-nums` at their own call sites (KpiCard, HoldingsTable,
+ *     chart labels) — the body is never globally forced to monospace.
+ *   • Keep the base layer minimal: Tailwind's Preflight (`@tailwind base`)
+ *     already normalizes the UA stylesheet, so no heavy `*` reset is added.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Full-height document so the app shell (sidebar + top bar + content) can
+   * stretch to the viewport. `scrollbar-*` are inherited properties declared
+   * once here so Firefox and modern Blink render a thin, muted institutional
+   * scrollbar across every scroll container. Colors resolve to tokens.
+   */
+  html {
+    @apply h-full;
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.border.strong') transparent;
+  }
+
+  /**
+   * App canvas. `bg-background` is the cool muted gray that makes white
+   * `surface` cards read as elevated; `text-text` is the deep slate/navy
+   * primary ink; `font-sans` resolves to `var(--font-sans)` (the next/font
+   * display face, with system fallbacks). `antialiased` smooths the precise
+   * institutional typography. `min-h-full` guarantees the canvas fills short
+   * pages so the chrome never floats on bare white.
+   */
+  body {
+    @apply min-h-full bg-background text-text font-sans antialiased;
+  }
+
+  /**
+   * Accessibility: a visible, token-colored focus ring for KEYBOARD users
+   * only (`:focus-visible`, not `:focus`, so mouse clicks don't show a ring).
+   * The ring uses the restrained navy-indigo `accent` with an offset in the
+   * canvas color so it reads clearly on both the background and white cards.
+   */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+
+  /**
+   * Horizontal rules default to the standard divider token rather than the
+   * inherited text color, keeping separators muted and on-palette.
+   */
+  hr {
+    @apply border-border;
+  }
+
+  /**
+   * Text selection uses the soft accent tint with the strong accent ink for a
+   * calm, on-brand highlight instead of the bright browser default.
+   */
+  ::selection {
+    background-color: theme('colors.accent.subtle');
+    color: theme('colors.accent.strong');
+  }
+
+  /**
+   * WebKit/Blink scrollbar to match the Firefox `scrollbar-color` above.
+   * Track is transparent (blends with any surface); the thumb is a muted
+   * structural border token that darkens to a subtle slate on hover. The
+   * track/thumb size resolves to the `spacing.scrollbar` design token, so no
+   * raw sizing value is hardcoded here.
+   */
+  ::-webkit-scrollbar {
+    width: theme('spacing.scrollbar');
+    height: theme('spacing.scrollbar');
+  }
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: theme('colors.border.strong');
+    border-radius: theme('borderRadius.badge');
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: theme('colors.text.subtle');
+  }
+}
+
+/**
+ * NAV chart axis ticks — monospace tabular numerics + accessible color.
+ * ---------------------------------------------------------------------------
+ * The NAV/performance chart (`components/NavChart.tsx`, the ONLY Recharts
+ * surface in the app) needs its X/Y axis tick labels in the monospace face with
+ * tabular figures, matching every other numeric surface (KpiCard, HoldingsTable,
+ * tooltips) so the "$468.2M" / "Jun 2024" ticks share the same monospace rhythm
+ * (README L26; AAP §7.7.2).
+ *
+ * Recharts renders ticks as SVG `<text class="recharts-cartesian-axis-tick-value">`.
+ * It applies known SVG presentation props from the axis `tick={{ … }}` object
+ * (e.g. `fill` / `fillOpacity`) but STRIPS `className`, so a `font-mono
+ * tabular-nums` class passed via `tick` never reaches the `<text>` — the labels
+ * fall back to the inherited `--font-sans`. We therefore style Recharts' own
+ * emitted tick-value class.
+ *
+ * IMPORTANT — this rule is intentionally OUTSIDE `@layer base`. Tailwind
+ * tree-shakes custom rules inside `@layer` whose selector class is never seen in
+ * the content globs, and `recharts-cartesian-axis-tick-value` is generated by
+ * Recharts at RUNTIME (it never appears in any `.tsx` source), so an in-layer
+ * rule would be purged from the build. As an unlayered rule it is emitted
+ * verbatim and also wins the cascade over the layered body `font-sans`.
+ *
+ * `@apply font-mono tabular-nums` inlines the exact same Tailwind utilities used
+ * at every other numeric call site — `font-family` still resolves to the
+ * `--font-mono` next/font token — so this stays fully token-driven with zero
+ * hardcoded font values.
+ *
+ * COLOR / CONTRAST (MJ-10): the same rule also sets `fill` to the muted-text
+ * token at full opacity. Recharts colors ticks via a `fill` PRESENTATION
+ * ATTRIBUTE (default `#808080`), which this author rule overrides (author CSS
+ * outranks presentation attributes). The opaque `colors.text.muted` token
+ * measures 5.82:1 on the white chart surface — WCAG AA for normal text —
+ * whereas the previous accent dimmed to 0.65 opacity did not (~3.35:1).
+ * `theme('colors.text.muted')` keeps the value token-driven — no hardcoded hex.
+ */
+.recharts-cartesian-axis-tick-value {
+  @apply font-mono tabular-nums;
+  fill: theme('colors.text.muted');
+  fill-opacity: 1;
+}
