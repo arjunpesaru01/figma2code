@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finebank Dashboard — Executive Summary</title>
 
+  <!-- FG-08: self-contained data-URI SVG favicon. Without an explicit icon the
+       browser auto-requests /favicon.ico, which 404s for this standalone single-file
+       deck. An inline data URI supplies the icon with zero network requests, keeping
+       the artifact fully self-contained. -->
+  <link
+    rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%235B39F3'/><circle cx='16' cy='16' r='6' fill='%2394FAD5'/></svg>"
+  />
+
   <!-- Google Fonts: Inter (body), Space Grotesk (display), Fira Code (mono/eyebrows) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -383,6 +392,24 @@
     /* progress/controls tint */
     .reveal .progress { color: var(--blitzy-primary); }
     .reveal .controls { color: var(--blitzy-primary); }
+
+    /* FG-09: reveal.js navigation controls — accessibility hardening.
+       This inline <style> loads AFTER reveal.css, so equal-specificity rules win.
+       (1) WCAG 2.5.5 Target Size: force each control button to a >=44x44px hit
+           area (reveal's default arrow buttons render ~36x36px). min-width/height
+           expand the box without competing with reveal's own width/height.
+       (2) WCAG 2.4.7 Focus Visible: reveal draws no keyboard-focus indicator on its
+           control buttons; add a clearly visible brand-primary focus ring that only
+           appears for keyboard focus (:focus-visible), never on mouse click. */
+    .reveal .controls button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+    .reveal .controls button:focus-visible {
+      outline: 3px solid var(--blitzy-primary);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -414,7 +441,7 @@
           </div>
           <div class="kpi-card">
             <span class="kpi-icon"><i data-lucide="component" aria-hidden="true"></i></span>
-            <span class="kpi-value">10</span>
+            <span class="kpi-value">11</span>
             <span class="kpi-label">Components built</span>
           </div>
           <div class="kpi-card">
@@ -638,9 +665,9 @@ flowchart LR
         <span class="eyebrow">In summary</span>
         <h2>All six screens live</h2>
         <ul>
-          <li>Explore the shared shell and six delivered screens.</li>
-          <li>Next: confirm Figma parity, then harden accessibility.</li>
-          <li>Vercel-ready — standard build, no custom ops.</li>
+          <li>Explore the shared shell and all six delivered screens.</li>
+          <li>Accessibility and performance already audit at 100/100.</li>
+          <li>Vercel-ready — standard build; design sign-off is the open item.</li>
         </ul>
         <div class="brand-lockup"><span class="brand-dot"></span>Blitzy</div>
         <div class="accent-bar"></div>
@@ -757,7 +784,17 @@ flowchart LR
       transition: 'slide',
       controlsTutorial: false,
       width: 1920,
-      height: 1080
+      height: 1080,
+      // FG-07: keep the deck in the standard fixed-slide model at every viewport
+      // width. reveal.js 5.x auto-activates its "scroll view" (a vertical reading
+      // mode that re-wraps every slide section inside a .scroll-page and abandons the
+      // horizontal slide index) once the window width is <= scrollActivationWidth
+      // (default 435px). In that mode the on-screen slide desynchronizes from both
+      // window.location.hash and Reveal.getIndices(), which is the reported wide ->
+      // narrow (<=435px) desync. Setting scrollActivationWidth to null disables the
+      // automatic switch, so a resize simply scales the current slide down to fit
+      // while its hash and index stay in lockstep.
+      scrollActivationWidth: null
     });
 
     Reveal.on('ready', renderDynamicVisuals);

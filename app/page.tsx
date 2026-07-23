@@ -30,6 +30,31 @@
 import { redirect } from "next/navigation";
 
 /**
+ * Route segment config: render this landing route DYNAMICALLY (at request
+ * time) rather than statically prerendering it at build time.
+ *
+ * Why this is load-bearing (QA: production `/` redirect must emit a `Location`
+ * header): when `/` is STATICALLY prerendered, `redirect("/overview")` is baked
+ * into a static RSC/HTML document and served with a 307 that carries NO HTTP
+ * `Location` header — so non-JavaScript clients (curl, link checkers, some
+ * crawlers) cannot follow it; only the Next.js client runtime repairs the
+ * navigation. Forcing dynamic rendering makes `redirect()` execute on the
+ * server for each request, so Next.js emits a standards-compliant 307 WITH a
+ * real `Location: /overview` header for every client.
+ *
+ * Because `/` remains a normal served route (not a `next.config` redirect that
+ * would short-circuit the routing pipeline), the app's baseline hardening
+ * response headers declared for `/:path*` in `next.config.mjs` still apply to
+ * this redirect response — so `/` keeps `X-Content-Type-Options`,
+ * `X-Frame-Options`, `Referrer-Policy`, and the `Content-Security-Policy`.
+ *
+ * This route does no data fetching and renders no markup, so forcing dynamic
+ * rendering carries no meaningful cost — it only changes an unfollowable static
+ * redirect into a standards-compliant request-time one.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Landing entry point for the root path `/`.
  *
  * Immediately performs a server-side redirect to the Overview screen. The
