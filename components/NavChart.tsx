@@ -41,7 +41,6 @@ import { useId, type CSSProperties } from "react";
 import type { NavPoint } from "@/lib/types";
 import {
   formatCompactCurrency,
-  formatCurrency,
   formatDate,
   isValidDateString,
 } from "@/lib/format";
@@ -108,7 +107,10 @@ export interface NavChartProps {
  * passed to `<Tooltip content={...} />`; every field on `TooltipProps` is
  * optional, so this component is safe to instantiate as `<NavTooltip />`.
  *
- * The numeric value is rendered through `formatCurrency` inside a
+ * The numeric value is rendered through `formatCompactCurrency` — the SAME
+ * formatter the Y-axis ticks and the visually-hidden latest-value summary use —
+ * so the tooltip reads in identical compact "$X.XM" notation to the axis it
+ * annotates (MN-11: tooltip↔axis notation consistency). It sits inside a
  * `font-mono tabular-nums` cell so it aligns and matches the monospace-numeric
  * requirement; the date label is rendered through `formatDate`. The container
  * is styled entirely with theme tokens (`bg-surface`, `border-border`, …) — no
@@ -136,8 +138,14 @@ function NavTooltip({ active, payload, label }: TooltipProps<number, string>) {
       <p className="font-mono text-2xs uppercase tracking-wide tabular-nums text-text-muted">
         {formatDate(dateLabel, { month: "short", year: "numeric" })}
       </p>
+      {/* Value uses `formatCompactCurrency` — the same compact "$X.XM"
+          notation as the Y-axis ticks (and the sr-only summary) — so the
+          tooltip and the axis it annotates never disagree on notation
+          (MN-11). Non-finite readings fall back to an em dash. */}
       <p className="font-mono text-sm tabular-nums text-text">
-        {Number.isFinite(numericValue) ? formatCurrency(numericValue) : "\u2014"}
+        {Number.isFinite(numericValue)
+          ? formatCompactCurrency(numericValue)
+          : "\u2014"}
       </p>
     </div>
   );
