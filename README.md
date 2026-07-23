@@ -97,8 +97,10 @@ place.
   padding), plus the App Router brand icon `app/icon.svg`.
 - The first-party presentational components under `components/`: `Sidebar`,
   `TopBar`, `KpiCard`, `HoldingsTable`, `NavChart` (Recharts), `AlertsPanel`,
-  and the data-dense section tables `CashBalancesTable`, `CollateralTable`,
-  `CorporateActionsTable`, and `ReportsTable`.
+  the data-dense section tables `CashBalancesTable`, `CollateralTable`,
+  `CorporateActionsTable`, and `ReportsTable`, and the numeric-typography
+  helper `FigureText` (wraps numeric fragments in monospace within prose) —
+  eleven components in total.
 - All six screen routes under `app/`, each matching its Figma frame:
   `/overview` (the composite landing screen — KPI cards, the NAV chart, and a
   compact alerts panel — that `/` redirects to), `/holdings`,
@@ -133,9 +135,10 @@ routes:
   one `page.tsx` per screen (`overview/`, `holdings/`, `cash-collateral/`,
   `corporate-actions/`, `compliance/`, `reporting/`).
 - `components/` — first-party presentational components: `Sidebar`, `TopBar`,
-  `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`, and the data-dense
+  `KpiCard`, `HoldingsTable`, `NavChart`, `AlertsPanel`, the data-dense
   section tables `CashBalancesTable`, `CollateralTable`,
-  `CorporateActionsTable`, and `ReportsTable`.
+  `CorporateActionsTable`, and `ReportsTable`, and the numeric-typography
+  helper `FigureText`.
 - `lib/` — `types.ts` (view models), `mock-data.ts` (static data), `format.ts`
   (monospace currency/percent formatters), and `nav.ts` (six-section route
   config).
